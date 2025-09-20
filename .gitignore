@@ -1,18 +1,24 @@
-# папки IDE
-.idea/
-.vscode/
-
-# зависимости
-node_modules/
-
-# сборки
-dist/
-build/
-
-# системные файлы
+# Logs
+logs
 *.log
-.DS_Store
-Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# env файлы
-.env
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
