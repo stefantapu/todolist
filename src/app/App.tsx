@@ -1,75 +1,86 @@
-import { useState } from 'react';
-import Button from '@mui/material/Button';
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 
-import reactLogo from '../assets/react.svg';
-import viteLogo from '/vite.svg';
 import './App.css';
-import AppBar from './AppBar.tsx';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import AppBar from '../shared/ui-kit/AppBar.tsx';
+import {
+  Button,
+  Container,
+  InputAdornment,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import AccountCircle from '@mui/icons-material/AccountCircle';
+import { PasswordRounded } from '@mui/icons-material';
+import { useState } from 'react';
 
-function App() {
-  const [count, setCount] = useState(0);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const darkTheme = createTheme({
-    palette: {
-      mode: 'dark',
-    },
-  });
-
-  const lightTheme = createTheme({
-    palette: {
-      mode: 'light',
-      primary: {
-        main: '#bad8b9ff',
-      },
-    },
-  });
-
-  const handleToggleTheme = () => {
-    setIsDarkMode(prev => !prev);
-  };
-
+const App = () => {
   return (
     <>
-      <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
-        <CssBaseline />
-        <AppBar />
-        <Button variant="contained" onClick={handleToggleTheme}>
-          {isDarkMode ? 'Switch to Light' : 'Switch to Dark'}
-        </Button>
-
-        <div style={{ height: '5000px' }}>
-          <a href="https://vite.dev" target="_blank">
-            <img src={viteLogo} className="logo" alt="Vite logo" />
-          </a>
-          <a href="https://react.dev" target="_blank">
-            <img src={reactLogo} className="logo react" alt="React logo" />
-          </a>
-        </div>
-        <h1>Vite + React</h1>
-        <div className="card">
-          <Button
-            variant="contained"
-            onClick={() => setCount(count => count + 1)}
-          >
-            count is {count} !
-          </Button>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test HMR
-          </p>
-        </div>
-        <p className="read-the-docs">
-          Click on the Vite and React logos to learn more
-        </p>
-      </ThemeProvider>
+      <AppBar />
+      <Container
+        maxWidth="sm"
+        sx={{
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: '70%',
+        }}
+      >
+        <Stack
+          direction="column"
+          spacing={2}
+          sx={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+          }}
+        >
+          <Typography variant="h5" gutterBottom>
+            Login
+          </Typography>
+          <Container maxWidth={'sm'}>
+            <TextField
+              label="E-mail"
+              fullWidth
+              size="small"
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AccountCircle />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              variant="outlined"
+            />
+          </Container>
+          <Container maxWidth={'sm'}>
+            <TextField
+              label="Password"
+              type="password"
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PasswordRounded />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              variant="outlined"
+              size="small"
+              fullWidth
+            />
+          </Container>
+          <Button variant="contained">Enter</Button>
+        </Stack>
+      </Container>
     </>
   );
-}
+};
 
 export default App;
