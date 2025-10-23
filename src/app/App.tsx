@@ -18,10 +18,32 @@ import {
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import { PasswordRounded } from '@mui/icons-material';
-import { useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { useState, useMemo, useEffect } from 'react';
+import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 
 const App = () => {
+  // COLOR SCHEME
+  const [mode, setMode] = useState<'light' | 'dark'>(
+    (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
+  );
+  useEffect(() => {
+    localStorage.setItem('theme', mode);
+  }, [mode]);
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode,
+        },
+      }),
+    [mode]
+  );
+  const toggleTheme = () => {
+    setMode(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  // USER
   const [user, setUser] = useState<{
     access_token: string;
     username: string;
@@ -69,10 +91,9 @@ const App = () => {
     const accessToken = loginData.access_token;
     const decoded = jwtDecode(accessToken);
     console.log(decoded);
-
     localStorage.setItem('accessToken', accessToken);
-
     setIsLoading(false);
+    setUser(loginData);
   };
 
   // REGISTER
@@ -90,8 +111,9 @@ const App = () => {
   };
 
   return (
-    <>
-      <AppBar />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AppBar toggleTheme={toggleTheme} mode={mode} username={user?.username} />
       <Container
         maxWidth="sm"
         sx={{
@@ -181,7 +203,7 @@ const App = () => {
           </Stack>
         </Paper>
       </Container>
-    </>
+    </ThemeProvider>
   );
 };
 
