@@ -54,6 +54,7 @@ const App = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
@@ -70,44 +71,74 @@ const App = () => {
     if (newForm) setLoginFormName(newForm);
   };
 
-  // LOGIN
+  // USER LOGIN
   const handleLogin = async () => {
-    setIsLoading(true);
-    const loginResponse = await fetch(
-      'https://todos-be.vercel.app/auth/login',
-      {
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      const response = await fetch('https://todos-be.vercel.app/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username, password }),
         mode: 'cors',
-        headers: {
-          'Content-type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        // show exactly what the server sent
+        throw new Error(data?.message || `Login failed (${response.status})`);
       }
-    );
-    const loginData = (await loginResponse.json()) as {
-      access_token: string;
-      username: string;
-    };
-    const accessToken = loginData.access_token;
-    const decoded = jwtDecode(accessToken);
-    console.log(decoded);
-    localStorage.setItem('accessToken', accessToken);
-    setIsLoading(false);
-    setUser(loginData);
+
+      if (!data.access_token) throw new Error('Server did not return a token.');
+
+      const decoded = jwtDecode(data.access_token);
+      console.log('Decoded token:', decoded);
+
+      localStorage.setItem('accessToken', data.access_token);
+      setUser(data);
+    } catch (error) {
+      setErrorMessage((error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // REGISTER
+  // USER REGISTER
   const handleRegister = async () => {
-    setIsLoading(true);
-    await fetch('https://todos-be.vercel.app/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
-      mode: 'cors',
-      headers: {
-        'Content-type': 'application/json',
-      },
-    });
-    setIsLoading(false);
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      const response = await fetch(
+        'https://todos-be.vercel.app/auth/register',
+        {
+          method: 'POST',
+          body: JSON.stringify({ username, password }),
+          mode: 'cors',
+          headers: {
+            'Content-type': 'application/json',
+          },
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.message);
+      }
+      if (!data.access_token) {
+        throw new Error('Server did not return a token.');
+      }
+
+      localStorage.setItem('accessToken', data.access_token);
+      setUser(data);
+    } catch (error) {
+      setErrorMessage((error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -132,9 +163,6 @@ const App = () => {
               alignItems: 'center',
             }}
           >
-            <Typography variant="h5" gutterBottom>
-              {loginFormName === 'login' ? 'Вход' : 'Регистрация'}
-            </Typography>
             <ToggleButtonGroup
               value={loginFormName}
               exclusive
@@ -143,10 +171,10 @@ const App = () => {
               fullWidth
             >
               <ToggleButton value="login" size="small">
-                Вход
+                Login
               </ToggleButton>
               <ToggleButton value="register" size="small">
-                Регистрация
+                Register
               </ToggleButton>
             </ToggleButtonGroup>
 
@@ -188,6 +216,13 @@ const App = () => {
               size="small"
               fullWidth
             />
+
+            {errorMessage && (
+              <Typography color="error" variant="body2" textAlign="center">
+                {errorMessage}
+              </Typography>
+            )}
+
             <Button
               onClick={loginFormName === 'login' ? handleLogin : handleRegister}
               loading={isLoading}
@@ -198,7 +233,7 @@ const App = () => {
                   loginFormName === 'login' ? '#1976d2' : '#3ecd3eff',
               }}
             >
-              {loginFormName === 'login' ? 'Войти' : 'Зарегистрироваться'}
+              {loginFormName === 'login' ? 'Login' : 'Register'}
             </Button>
           </Stack>
         </Paper>

@@ -17,7 +17,7 @@ interface Props {
   username?: string;
 }
 
-const AppBar = ({ toggleTheme, mode, access_token, username }: Props) => {
+const AppBar = ({ toggleTheme, mode, username }: Props) => {
   //   const { username } = props;
   return (
     <MuiAppBar position="fixed">
