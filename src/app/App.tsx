@@ -19,8 +19,13 @@ import {
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import { PasswordRounded } from '@mui/icons-material';
 import { useState } from 'react';
+import { jwtDecode } from 'jwt-decode';
 
 const App = () => {
+  const [user, setUser] = useState<{
+    access_token: string;
+    username: string;
+  } | null>(null);
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>(
     'login'
   );
@@ -43,12 +48,45 @@ const App = () => {
     if (newForm) setLoginFormName(newForm);
   };
 
-  const handleSubmit = () => {
+  // LOGIN
+  const handleLogin = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log({ username, password, form: loginFormName });
-    }, 2000);
+    const loginResponse = await fetch(
+      'https://todos-be.vercel.app/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify({ username, password }),
+        mode: 'cors',
+        headers: {
+          'Content-type': 'application/json',
+        },
+      }
+    );
+    const loginData = (await loginResponse.json()) as {
+      access_token: string;
+      username: string;
+    };
+    const accessToken = loginData.access_token;
+    const decoded = jwtDecode(accessToken);
+    console.log(decoded);
+
+    localStorage.setItem('accessToken', accessToken);
+
+    setIsLoading(false);
+  };
+
+  // REGISTER
+  const handleRegister = async () => {
+    setIsLoading(true);
+    await fetch('https://todos-be.vercel.app/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+      mode: 'cors',
+      headers: {
+        'Content-type': 'application/json',
+      },
+    });
+    setIsLoading(false);
   };
 
   return (
@@ -129,7 +167,7 @@ const App = () => {
               fullWidth
             />
             <Button
-              onClick={handleSubmit}
+              onClick={loginFormName === 'login' ? handleLogin : handleRegister}
               loading={isLoading}
               variant="contained"
               fullWidth
