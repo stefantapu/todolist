@@ -20,7 +20,7 @@ interface Props {
 const AppBar = ({ toggleTheme, mode, username }: Props) => {
   //   const { username } = props;
   return (
-    <MuiAppBar position="fixed">
+    <MuiAppBar position="sticky">
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           My App

@@ -74,6 +74,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
 
       // Проверяем валидность токена
       jwtDecode(data.access_token);
+
       // Сохраняем токен в localStorage
       localStorage.setItem('accessToken', data.access_token);
 
