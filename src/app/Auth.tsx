@@ -18,15 +18,23 @@ interface AuthProps {
   onAuthSuccess: (user: { access_token: string; username: string }) => void;
 }
 
+// Компонент Auth отвечает за отображение формы авторизации и регистрации.
+// Принимает проп onAuthSuccess — функцию, вызываемую при успешной авторизации пользователя.
 const Auth = ({ onAuthSuccess }: AuthProps) => {
+  // loginFormName — состояние, определяющее, какая форма отображается: "login" или "register"
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>(
     'login'
   );
+  // username — состояние для хранения введённого email/имени пользователя
   const [username, setUsername] = useState('');
+  // password — состояние для хранения введённого пароля
   const [password, setPassword] = useState('');
+  // isLoading — состояние, показывающее, выполняется ли сейчас запрос к серверу
   const [isLoading, setIsLoading] = useState(false);
+  // errorMessage — состояние для хранения текста ошибки, если она возникла
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // handleLoginFormChange — обработчик переключения между формой входа и регистрации
   const handleLoginFormChange = (
     _: React.MouseEvent<HTMLElement>,
     newForm: 'login' | 'register'
@@ -34,16 +42,19 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
     if (newForm) setLoginFormName(newForm);
   };
 
+  // handleSubmit — обработчик отправки формы (авторизация или регистрация)
   const handleSubmit = async () => {
     try {
-      setIsLoading(true);
-      setErrorMessage(null);
+      setIsLoading(true); // Включаем индикатор загрузки
+      setErrorMessage(null); // Сбрасываем ошибку
 
+      // Выбираем URL для запроса в зависимости от типа формы
       const url =
         loginFormName === 'login'
           ? 'https://todos-be.vercel.app/auth/login'
           : 'https://todos-be.vercel.app/auth/register';
 
+      // Отправляем POST-запрос с данными пользователя
       const response = await fetch(url, {
         method: 'POST',
         body: JSON.stringify({ username, password }),
@@ -51,24 +62,33 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
         headers: { 'Content-Type': 'application/json' },
       });
 
+      // Получаем ответ от сервера
       const data = await response.json().catch(() => ({}));
 
+      // Если сервер вернул ошибку — выбрасываем исключение
       if (!response.ok) {
         throw new Error(data?.message || `Error (${response.status})`);
       }
+      // Если нет access_token — выбрасываем исключение
       if (!data.access_token) throw new Error('Server did not return a token.');
 
-      jwtDecode(data.access_token); // просто проверяем, что токен валиден
+      // Проверяем валидность токена
+      jwtDecode(data.access_token);
+      // Сохраняем токен в localStorage
       localStorage.setItem('accessToken', data.access_token);
 
+      // Вызываем функцию onAuthSuccess, передавая данные пользователя
       onAuthSuccess(data);
     } catch (error) {
+      // В случае ошибки — сохраняем текст ошибки для отображения
       setErrorMessage((error as Error).message);
     } finally {
+      // Отключаем индикатор загрузки
       setIsLoading(false);
     }
   };
 
+  // Возвращаем JSX — разметку формы авторизации/регистрации
   return (
     <Container
       maxWidth="sm"
@@ -76,7 +96,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
         justifyContent: 'center',
         alignItems: 'center',
         alignContent: 'center',
-        minHeight: '100vh',
+        minHeight: '100vh', // Центрируем форму по вертикали
       }}
     >
       <Paper elevation={3} sx={{ padding: 5 }}>
@@ -88,6 +108,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
             alignItems: 'center',
           }}
         >
+          {/* Переключатель между формой входа и регистрации */}
           <ToggleButtonGroup
             value={loginFormName}
             exclusive
@@ -103,6 +124,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
             </ToggleButton>
           </ToggleButtonGroup>
 
+          {/* Поле для ввода email/имени пользователя */}
           <TextField
             label="E-mail"
             type="email"
@@ -123,6 +145,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
             size="small"
           />
 
+          {/* Поле для ввода пароля */}
           <TextField
             label="Пароль"
             type="password"
@@ -143,12 +166,14 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
             size="small"
           />
 
+          {/* Отображение ошибки, если она есть */}
           {errorMessage && (
             <Typography color="error" variant="body2" textAlign="center">
               {errorMessage}
             </Typography>
           )}
 
+          {/* Кнопка отправки формы */}
           <Button
             onClick={handleSubmit}
             variant="contained"
