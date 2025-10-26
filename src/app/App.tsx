@@ -5,16 +5,14 @@ import '@fontsource/roboto/700.css';
 import './App.css';
 
 import { useState } from 'react';
-import { Typography } from '@mui/material';
 import AppBar from '../shared/ui-kit/AppBar.tsx';
-import Auth from './Auth.tsx';
+import Auth from '../entities/User/ui/Auth.tsx';
 import { ThemeProviderCustom, useThemeMode } from './ThemeProviderCustom.tsx';
+import type { UserType } from '../entities/User/model/userType.ts';
+import Todos from '../entities/Todo/ui/Todos.tsx';
 
 const AppContent = () => {
-  const [user, setUser] = useState<{
-    access_token: string;
-    username: string;
-  } | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const { mode, toggleTheme } = useThemeMode();
 
   console.log('user:', user);
@@ -22,12 +20,7 @@ const AppContent = () => {
   return (
     <>
       <AppBar toggleTheme={toggleTheme} mode={mode} username={user?.username} />
-      {!user && <Auth onAuthSuccess={setUser} />}
-      {user && (
-        <Typography textAlign="center">
-          Добро пожаловать, {user.username}!
-        </Typography>
-      )}
+      {user ? <Todos /> : <Auth onAuthSuccess={setUser} />}
     </>
   );
 };
