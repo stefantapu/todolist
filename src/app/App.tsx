@@ -17,6 +17,8 @@ const AppContent = () => {
   } | null>(null);
   const { mode, toggleTheme } = useThemeMode();
 
+  console.log('user:', user);
+
   return (
     <>
       <AppBar toggleTheme={toggleTheme} mode={mode} username={user?.username} />
