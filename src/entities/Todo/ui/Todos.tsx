@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
@@ -6,10 +7,9 @@ import Stack from '@mui/material/Stack';
 import type { TodoType } from '../model/todoType';
 import Checkbox from '@mui/material/Checkbox';
 import { mockTodos } from '../model/mockTodos';
-
 type TodoProps = {
   todo: TodoType;
-  setTodo: (todo: TodoProps) => void;
+  setTodo: (todo: TodoType) => void;
 };
 
 const Todo = ({ todo, setTodo }: TodoProps) => {
@@ -35,7 +35,7 @@ const Todos = () => {
   const [todos, setTodos] = useState<TodoType[]>(mockTodos);
 
   const setTodo = (todo: TodoType) => {
-    const updateTodos = todos.map((t: { _id: string }) => {
+    const updateTodos = todos.map((t: TodoType) => {
       if (t._id === todo._id) {
         return todo;
       }
@@ -52,8 +52,4 @@ const Todos = () => {
     </Stack>
   );
 };
-
 export default Todos;
-function useState<T>(mockTodos: TodoType[]): [any, any] {
-  throw new Error('Function not implemented.');
-}
