@@ -4,18 +4,36 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import './App.css';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppBar from '../shared/ui-kit/AppBar.tsx';
 import Auth from '../entities/User/ui/Auth.tsx';
 import { ThemeProviderCustom, useThemeMode } from './ThemeProviderCustom.tsx';
 import type { UserType } from '../entities/User/model/userType.ts';
 import Todos from '../entities/Todo/ui/Todos.tsx';
+import { jwtDecode } from 'jwt-decode';
 
 const AppContent = () => {
   const [user, setUser] = useState<UserType | null>(null);
   const { mode, toggleTheme } = useThemeMode();
 
   console.log('user:', user);
+
+  // Восстанавливаем пользователя при загрузке приложения
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      try {
+        const decoded: UserType = jwtDecode(token);
+        // jwtDecode не знает, что у токена есть username, поэтому укажем тип any.
+        // Если backend добавляет username в payload, можно вытащить:
+        const username = decoded.username || 'User';
+        setUser({ access_token: token, username });
+      } catch (error) {
+        console.error('Ошибка при декодировании токена:', error);
+        localStorage.removeItem('accessToken');
+      }
+    }
+  }, []);
 
   return (
     <>
