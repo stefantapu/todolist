@@ -18,6 +18,10 @@ interface Props {
 }
 
 const AppBar = ({ toggleTheme, mode, username }: Props) => {
+  function logOut() {
+    localStorage.clear();
+  }
+
   //   const { username } = props;
   return (
     <MuiAppBar position="sticky">
@@ -36,11 +40,16 @@ const AppBar = ({ toggleTheme, mode, username }: Props) => {
           </IconButton>
 
           {username ? (
-            <Tooltip title={username}>
-              <Avatar src="" alt={username}>
-                {username[0]}
-              </Avatar>
-            </Tooltip>
+            <>
+              <Tooltip title={username}>
+                <Avatar src="" alt={username}>
+                  {username[0]}
+                </Avatar>
+              </Tooltip>
+              <Button color="inherit" onClick={logOut}>
+                Logout
+              </Button>
+            </>
           ) : (
             <Button color="inherit">Login</Button>
           )}
