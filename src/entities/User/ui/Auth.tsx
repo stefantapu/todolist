@@ -7,12 +7,14 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Typography,
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import { PasswordRounded } from '@mui/icons-material';
-import { jwtDecode } from 'jwt-decode';
 import { useState } from 'react';
+import { rootApi } from '../../../shared/api/rootApi';
+import type { UserType } from '../model/userType';
+import { useSnackbar } from 'notistack';
+import type { AxiosError } from 'axios';
 
 interface AuthProps {
   onAuthSuccess: (user: { access_token: string; username: string }) => void;
@@ -21,6 +23,7 @@ interface AuthProps {
 // Компонент Auth отвечает за отображение формы авторизации и регистрации.
 // Принимает проп onAuthSuccess — функцию, вызываемую при успешной авторизации пользователя.
 const Auth = ({ onAuthSuccess }: AuthProps) => {
+  const { enqueueSnackbar } = useSnackbar();
   // loginFormName — состояние, определяющее, какая форма отображается: "login" или "register"
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>(
     'login'
@@ -32,7 +35,6 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
   // isLoading — состояние, показывающее, выполняется ли сейчас запрос к серверу
   const [isLoading, setIsLoading] = useState(false);
   // errorMessage — состояние для хранения текста ошибки, если она возникла
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // handleLoginFormChange — обработчик переключения между формой входа и регистрации
   const handleLoginFormChange = (
@@ -46,43 +48,27 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
   const handleSubmit = async () => {
     try {
       setIsLoading(true); // Включаем индикатор загрузки
-      setErrorMessage(null); // Сбрасываем ошибку
 
       // Выбираем URL для запроса в зависимости от типа формы
-      const url =
-        loginFormName === 'login'
-          ? 'https://todos-be.vercel.app/auth/login'
-          : 'https://todos-be.vercel.app/auth/register';
+      const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
 
-      // Отправляем POST-запрос с данными пользователя
-      const response = await fetch(url, {
-        method: 'POST',
-        body: JSON.stringify({ username, password }),
-        mode: 'cors',
-        headers: { 'Content-Type': 'application/json' },
+      const loginData = await rootApi.post<UserType>(url, {
+        username: username,
+        password: password,
       });
-
-      // Получаем ответ от сервера
-      const data = await response.json().catch(() => ({}));
-
-      // Если сервер вернул ошибку — выбрасываем исключение
-      if (!response.ok) {
-        throw new Error(data?.message || `Error (${response.status})`);
-      }
-      // Если нет access_token — выбрасываем исключение
-      if (!data.access_token) throw new Error('Server did not return a token.');
-
-      // Проверяем валидность токена
-      jwtDecode(data.access_token);
+      const accessToken = loginData.data.access_token;
 
       // Сохраняем токен в localStorage
-      localStorage.setItem('access_token', data.access_token);
+      localStorage.setItem('access_token', accessToken);
 
       // Вызываем функцию onAuthSuccess, передавая данные пользователя
-      onAuthSuccess(data);
+      onAuthSuccess(loginData.data);
+      enqueueSnackbar('Wellcome!', { variant: 'success' });
     } catch (error) {
       // В случае ошибки — сохраняем текст ошибки для отображения
-      setErrorMessage((error as Error).message);
+      const axiosError = error as AxiosError<{ message: string }>;
+      enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
+      // enqueueSnackbar(errorMessage, { variant: 'error' });
     } finally {
       // Отключаем индикатор загрузки
       setIsLoading(false);
@@ -124,7 +110,6 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
               Register
             </ToggleButton>
           </ToggleButtonGroup>
-
           {/* Поле для ввода email/имени пользователя */}
           <TextField
             label="E-mail"
@@ -145,7 +130,6 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
             variant="outlined"
             size="small"
           />
-
           {/* Поле для ввода пароля */}
           <TextField
             label="Пароль"
@@ -166,14 +150,6 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
             variant="outlined"
             size="small"
           />
-
-          {/* Отображение ошибки, если она есть */}
-          {errorMessage && (
-            <Typography color="error" variant="body2" textAlign="center">
-              {errorMessage}
-            </Typography>
-          )}
-
           {/* Кнопка отправки формы */}
           <Button
             onClick={handleSubmit}

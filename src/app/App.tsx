@@ -11,6 +11,7 @@ import { ThemeProviderCustom, useThemeMode } from './ThemeProviderCustom.tsx';
 import type { UserType } from '../entities/User/model/userType.ts';
 import Todos from '../entities/Todo/ui/Todos.tsx';
 import { autoLogin } from '../shared/util/autoLogin.ts';
+import { SnackbarProvider } from 'notistack';
 
 const AppContent = () => {
   const userFromLS = autoLogin();
@@ -28,9 +29,11 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <ThemeProviderCustom>
-    <AppContent />
-  </ThemeProviderCustom>
+  <SnackbarProvider>
+    <ThemeProviderCustom>
+      <AppContent />
+    </ThemeProviderCustom>
+  </SnackbarProvider>
 );
 
 export default App;
