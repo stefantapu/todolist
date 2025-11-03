@@ -10,6 +10,7 @@ import { mockTodos } from '../model/mockTodos';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import { CardHeader, Grid, TextField } from '@mui/material';
+import { useSnackbar } from 'notistack';
 
 //  Тип пропсов компонента Todo
 type TodoProps = {
@@ -20,21 +21,24 @@ type TodoProps = {
 //  Вложенный компонент, отвечающий за рендер одной задачи (карточки)
 // Принимает объект задачи и функцию для обновления этой задачи.
 const Todo = ({ todo, setTodo }: TodoProps) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
+  const [editingField, setEditingField] = useState<
+    'title' | 'description' | null
+  >(null);
   const [editedTitle, setEditedTitle] = useState(todo.title);
+  const [editedDescription, setEditedDescription] = useState(todo.description);
 
-  const handleBlur = () => {
-    setIsEditing(false);
-    if (editedTitle.trim() !== todo.title) {
-      setTodo({
-        ...todo,
-        title: editedTitle,
-        updatedAt: new Date().toISOString(),
-      });
-    }
+  const saveChanges = () => {
+    setTodo({
+      ...todo,
+      title: editedTitle,
+      description: editedDescription,
+      updatedAt: new Date().toISOString(),
+    });
+    setEditingField(null);
+    enqueueSnackbar('Saved!', { variant: 'success' });
   };
 
-  // Обработчик клика по чекбоксу — переключает состояние completed и вызывает setTodo
   const handleCheckClick = () => {
     setTodo({ ...todo, completed: !todo.completed });
   };
@@ -54,26 +58,36 @@ const Todo = ({ todo, setTodo }: TodoProps) => {
       <Paper elevation={3}>
         {/* Карточка задачи */}
         <Card variant="outlined" sx={{ minWidth: 275, maxWidth: 475 }}>
-          {/* Заголовок карточки: отображает title и чекбокс в action */}
           <CardHeader
             title={
-              isEditing ? (
+              editingField === 'title' ? (
                 <TextField
-                  value={editedTitle}
-                  variant="standard"
                   autoFocus
+                  value={editedTitle}
+                  variant="filled"
                   onChange={e => setEditedTitle(e.target.value)}
-                  onBlur={handleBlur}
+                  onBlur={saveChanges}
                   onKeyDown={e => {
-                    if (e.key === 'Enter') handleBlur();
+                    if (e.key === 'Enter') saveChanges();
                   }}
-                  sx={{ fontWeight: 500, width: '100%' }}
+                  sx={{
+                    width: { xs: '100%', sm: 200, md: 400 },
+                    '& .MuiInputBase-input': {
+                      fontWeight: 500,
+                      fontSize: 26,
+                      padding: 0,
+                      margin: 0,
+                    },
+                  }}
                 />
               ) : (
                 <Typography
                   variant="h6"
-                  sx={{ fontWeight: 500, cursor: 'pointer' }}
-                  onDoubleClick={() => setIsEditing(true)}
+                  sx={{ fontWeight: 500, cursor: 'pointer', fontSize: 26 }}
+                  onDoubleClick={() => {
+                    setEditedTitle(todo.title); // Устанавливаем текущее значение заголовка
+                    setEditingField('title');
+                  }}
                 >
                   {todo.title}
                 </Typography>
@@ -86,20 +100,54 @@ const Todo = ({ todo, setTodo }: TodoProps) => {
                 edge="end"
               />
             }
-            sx={{
-              mr: 1,
-              py: 2,
-            }}
           />
-          {/* Основной контент: описание задачи */}
+
           <CardContent>
-            <Typography variant="body2">{todo.description}</Typography>
+            {editingField === 'description' ? (
+              <TextField
+                multiline
+                autoFocus
+                value={editedDescription}
+                variant="standard"
+                onChange={e => setEditedDescription(e.target.value)}
+                onBlur={saveChanges}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') saveChanges();
+                }}
+                sx={{
+                  width: { xs: '100%', sm: 200 },
+                  '& .MuiInputBase-input': {
+                    fontWeight: 300,
+                    fontSize: 16,
+                    padding: 0,
+                    margin: 0,
+                  },
+                }}
+              />
+            ) : (
+              <Typography
+                variant="body1"
+                gutterBottom
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: 300,
+                  fontSize: 16,
+                }}
+                onDoubleClick={() => {
+                  console.log('Double clicked description');
+                  setEditedDescription(todo.description);
+                  setEditingField('description');
+                }}
+              >
+                {todo.description}
+              </Typography>
+            )}
           </CardContent>
           {/* Доп. информация: даты создания и изменения */}
           <CardContent>
             <Typography
               variant="caption"
-              sx={{ display: 'block', color: 'text.secondary' }}
+              sx={{ display: 'block', color: 'text.secondary', fontSize: 10 }}
             >
               Created: {new Date(todo.createdAt).toLocaleDateString()}
               <br />

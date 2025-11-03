@@ -20,6 +20,8 @@ interface Props {
 const AppBar = ({ toggleTheme, mode, username }: Props) => {
   function logOut() {
     localStorage.clear();
+    window.location.reload();
+    // window.location.href = '/login'; use when pagination available
   }
 
   //   const { username } = props;
