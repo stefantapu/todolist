@@ -132,7 +132,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
           />
           {/* Поле для ввода пароля */}
           <TextField
-            label="Пароль"
+            label="Password"
             type="password"
             fullWidth
             value={password}

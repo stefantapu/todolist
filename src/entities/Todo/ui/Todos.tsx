@@ -70,14 +70,26 @@ const Todo = ({ todo, setTodo }: TodoProps) => {
                   onKeyDown={e => {
                     if (e.key === 'Enter') saveChanges();
                   }}
+                  slotProps={{
+                    htmlInput: {
+                      sx: {
+                        fontWeight: 500,
+                        fontSize: 26,
+                        padding: 0,
+                        margin: 0,
+                        height: 'auto',
+                        lineHeight: 1.6,
+                      },
+                    },
+                  }}
                   sx={{
                     width: { xs: '100%', sm: 200, md: 400 },
-                    '& .MuiInputBase-input': {
-                      fontWeight: 500,
-                      fontSize: 26,
-                      padding: 0,
-                      margin: 0,
-                    },
+                    // '& .MuiInputBase-input': {
+                    //   fontWeight: 500,
+                    //   fontSize: 26,
+                    //   padding: 0,
+                    //   margin: 0,
+                    // },
                   }}
                 />
               ) : (
