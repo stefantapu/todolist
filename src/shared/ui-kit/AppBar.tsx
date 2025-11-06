@@ -9,6 +9,7 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
+import { useTodosStore } from '../../entities/Todo/model/store/useTodosStore';
 
 interface Props {
   toggleTheme: () => void;
@@ -18,6 +19,8 @@ interface Props {
 }
 
 const AppBar = ({ toggleTheme, mode, username }: Props) => {
+  const todos = useTodosStore(state => state.todos);
+  const undoneTodos = todos.filter(todo => !todo.completed);
   function logOut() {
     localStorage.clear();
     window.location.reload();
@@ -33,7 +36,9 @@ const AppBar = ({ toggleTheme, mode, username }: Props) => {
         </Typography>
 
         <div style={{ display: 'flex', gap: '10px' }}>
-          {username && <Button color="inherit">To Do's</Button>}
+          {username && (
+            <Button color="inherit">To Do's{' - ' + undoneTodos.length}</Button>
+          )}
 
           <Button color="inherit">About</Button>
 
