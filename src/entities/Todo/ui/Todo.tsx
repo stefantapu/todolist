@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import Card from '@mui/material/Card';
-
+import DeleteIcon from '@mui/icons-material/Delete';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
-
+import IconButton from '@mui/material/IconButton';
 import type { TodoType } from '../model/todoType';
 import Checkbox from '@mui/material/Checkbox';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
-import { CardHeader, TextField } from '@mui/material';
+import { CardHeader, Grid, TextField } from '@mui/material';
 import { useSnackbar } from 'notistack';
+import { useTodosStore } from '../model/store/useTodosStore';
 
 //  Тип пропсов компонента Todo
 type TodoProps = {
@@ -20,6 +21,8 @@ type TodoProps = {
 //  Вложенный компонент, отвечающий за рендер одной задачи (карточки)
 // Принимает объект задачи и функцию для обновления этой задачи.
 export const Todo = ({ todo, setTodo }: TodoProps) => {
+  const deleteTodo = useTodosStore(state => state.deleteTodo);
+
   const { enqueueSnackbar } = useSnackbar();
   const [editingField, setEditingField] = useState<
     'title' | 'description' | null
@@ -57,61 +60,69 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
       <Paper elevation={3}>
         {/* Карточка задачи */}
         <Card variant="outlined" sx={{ minWidth: 275, maxWidth: 475 }}>
-          <CardHeader
-            title={
-              editingField === 'title' ? (
-                <TextField
-                  autoFocus
-                  value={editedTitle}
-                  variant="filled"
-                  onChange={e => setEditedTitle(e.target.value)}
-                  onBlur={saveChanges}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') saveChanges();
-                  }}
-                  slotProps={{
-                    htmlInput: {
-                      sx: {
-                        fontWeight: 500,
-                        fontSize: 26,
-                        padding: 0,
-                        margin: 0,
-                        height: 'auto',
-                        lineHeight: 1.6,
+          <Grid
+            container
+            direction="row"
+            sx={{
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 2,
+            }}
+          >
+            <CardHeader
+              title={
+                editingField === 'title' ? (
+                  <TextField
+                    multiline
+                    autoFocus
+                    value={editedTitle}
+                    variant="filled"
+                    onChange={e => setEditedTitle(e.target.value)}
+                    onBlur={saveChanges}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveChanges();
+                    }}
+                    slotProps={{
+                      htmlInput: {
+                        sx: {
+                          fontWeight: 500,
+                          fontSize: 26,
+                          padding: 0,
+                          margin: 0,
+                          height: 'auto',
+                          lineHeight: 1.6,
+                        },
                       },
-                    },
-                  }}
-                  sx={{
-                    width: { xs: '100%', sm: 200, md: 400 },
-                    // '& .MuiInputBase-input': {
-                    //   fontWeight: 500,
-                    //   fontSize: 26,
-                    //   padding: 0,
-                    //   margin: 0,
-                    // },
-                  }}
-                />
-              ) : (
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 500, cursor: 'pointer', fontSize: 26 }}
-                  onDoubleClick={() => {
-                    setEditedTitle(todo.title); // Устанавливаем текущее значение заголовка
-                    setEditingField('title');
-                  }}
-                >
-                  {todo.title}
-                </Typography>
-              )
-            }
-            action={
-              <Checkbox
-                checked={todo.completed}
-                onClick={handleCheckClick} // переключаем completed при клике
-                edge="end"
-              />
-            }
-          />
+                    }}
+                    sx={{
+                      width: { xs: '100%', sm: 200, md: 400 },
+                    }}
+                  />
+                ) : (
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontSize: 26,
+                    }}
+                    onDoubleClick={() => {
+                      setEditedTitle(todo.title); // Устанавливаем текущее значение заголовка
+                      setEditingField('title');
+                    }}
+                  >
+                    {todo.title}
+                  </Typography>
+                )
+              }
+              sx={{ padding: 0 }}
+            />
+            <Checkbox
+              checked={todo.completed}
+              onClick={handleCheckClick} // переключаем completed при клике
+              edge="start"
+            />
+          </Grid>
 
           <CardContent>
             {editingField === 'description' ? (
@@ -138,7 +149,6 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
             ) : (
               <Typography
                 variant="body1"
-                gutterBottom
                 sx={{
                   cursor: 'pointer',
                   fontWeight: 300,
@@ -156,14 +166,29 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
           </CardContent>
           {/* Доп. информация: даты создания и изменения */}
           <CardContent>
-            <Typography
-              variant="caption"
-              sx={{ display: 'block', color: 'text.secondary', fontSize: 10 }}
+            <Grid
+              container
+              direction="row"
+              sx={{
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
             >
-              Created: {new Date(todo.createdAt).toLocaleDateString()}
-              <br />
-              Modified: {new Date(todo.updatedAt).toLocaleDateString()}
-            </Typography>
+              <Typography
+                variant="caption"
+                sx={{ display: 'block', color: 'text.secondary', fontSize: 10 }}
+              >
+                Created: {new Date(todo.createdAt).toLocaleDateString()}
+                <br />
+                Modified: {new Date(todo.updatedAt).toLocaleDateString()}
+              </Typography>
+              <IconButton
+                aria-label="delete"
+                onClick={() => deleteTodo(todo._id)}
+              >
+                <DeleteIcon></DeleteIcon>
+              </IconButton>
+            </Grid>
           </CardContent>
         </Card>
       </Paper>

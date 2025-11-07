@@ -7,6 +7,7 @@ type TodosState = {
   todos: TodoType[];
   addTodo: (newTodo: TodoType) => void;
   setTodos: (todos: TodoType[]) => void;
+  deleteTodo: (id: string) => void;
 };
 
 export const useTodosStore = create<TodosState>()(
@@ -15,6 +16,12 @@ export const useTodosStore = create<TodosState>()(
       todos: mockTodos,
       addTodo: (newTodo: TodoType) =>
         set(state => ({ todos: [newTodo, ...state.todos] })),
+
+      deleteTodo: (id: string) =>
+        set(state => ({
+          todos: state.todos.filter(todo => todo._id !== id),
+        })),
+
       setTodos: (todos: TodoType[]) => set({ todos }),
     };
   })

@@ -18,7 +18,7 @@ const AppContent = () => {
   const [user, setUser] = useState<UserType | null>(userFromLS);
   const { mode, toggleTheme } = useThemeMode();
 
-  console.log('user:', user);
+  // console.log('user:', user);
 
   return (
     <>
