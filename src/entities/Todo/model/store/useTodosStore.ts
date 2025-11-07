@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { mockTodos } from '../mockTodos';
+import { devtools } from 'zustand/middleware';
 import type { TodoType } from '../todoType';
 
 type TodosState = {
@@ -8,11 +9,13 @@ type TodosState = {
   setTodos: (todos: TodoType[]) => void;
 };
 
-export const useTodosStore = create<TodosState>(set => {
-  return {
-    todos: mockTodos,
-    addTodo: (newTodo: TodoType) =>
-      set(state => ({ todos: [newTodo, ...state.todos] })),
-    setTodos: (todos: TodoType[]) => set({ todos }),
-  };
-});
+export const useTodosStore = create<TodosState>()(
+  devtools(set => {
+    return {
+      todos: mockTodos,
+      addTodo: (newTodo: TodoType) =>
+        set(state => ({ todos: [newTodo, ...state.todos] })),
+      setTodos: (todos: TodoType[]) => set({ todos }),
+    };
+  })
+);
