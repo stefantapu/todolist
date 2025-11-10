@@ -11,6 +11,7 @@ const Todos = () => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
 
+  //Zustand STORE
   const todos = useTodosStore(state => state.todos);
   const addTodos = useTodosStore(state => state.addTodo);
   const setTodos = useTodosStore(state => state.setTodos);
@@ -45,6 +46,8 @@ const Todos = () => {
       order: todos.length + 1,
     };
     addTodos(newTodo);
+    setNewTodoTitle('');
+    setNewTodoDescription('');
   };
   return (
     // Контейнер для сетки карточек

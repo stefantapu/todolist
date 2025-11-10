@@ -14,6 +14,7 @@ export const useTodosStore = create<TodosState>()(
   devtools(set => {
     return {
       todos: mockTodos,
+
       addTodo: (newTodo: TodoType) =>
         set(state => ({ todos: [newTodo, ...state.todos] })),
 
