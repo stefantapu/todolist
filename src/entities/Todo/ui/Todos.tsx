@@ -51,7 +51,7 @@ const Todos = () => {
   };
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Paper elevation={24} sx={{ padding: 4, margin: 2 }}>
+      <Paper elevation={24} sx={{ padding: 4, margin: 2, marginTop: 4 }}>
         <Stack
           direction="column"
           spacing={2}
@@ -62,7 +62,7 @@ const Todos = () => {
         >
           <Input
             sx={{
-              width: '50%',
+              width: '100%',
               fontWeight: 500,
               fontSize: 26,
               lineHeight: 1.6,
@@ -74,7 +74,7 @@ const Todos = () => {
           />
           <Input
             sx={{
-              width: '50%',
+              width: '100%',
             }}
             multiline
             placeholder="Description"
