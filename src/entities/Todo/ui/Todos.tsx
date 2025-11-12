@@ -1,5 +1,5 @@
 import Box from '@mui/material/Box';
-import { Button, Grid, Input } from '@mui/material';
+import { Button, Grid, Input, Paper, Stack } from '@mui/material';
 import { useTodosStore } from '../model/store/useTodosStore';
 import { Todo } from './Todo';
 import { useState } from 'react';
@@ -50,21 +50,50 @@ const Todos = () => {
     setNewTodoDescription('');
   };
   return (
-    // Контейнер для сетки карточек
     <Box sx={{ flexGrow: 1 }}>
-      <Input
-        placeholder="title"
-        value={newTodoTitle}
-        onChange={handleTitleChange}
-      />
-      <Input
-        placeholder="description"
-        value={newTodoDescription}
-        onChange={handleDescriptionChange}
-      />
-      <Button disabled={!newTodoTitle} onClick={handldeAddTodo}>
-        Add
-      </Button>
+      <Paper elevation={24} sx={{ padding: 4, margin: 2 }}>
+        <Stack
+          direction="column"
+          spacing={2}
+          sx={{
+            width: '100%',
+            alignItems: 'center',
+          }}
+        >
+          <Input
+            sx={{
+              width: '50%',
+              fontWeight: 500,
+              fontSize: 26,
+              lineHeight: 1.6,
+            }}
+            multiline
+            placeholder="Title"
+            value={newTodoTitle}
+            onChange={handleTitleChange}
+          />
+          <Input
+            sx={{
+              width: '50%',
+            }}
+            multiline
+            placeholder="Description"
+            value={newTodoDescription}
+            onChange={handleDescriptionChange}
+          />
+          <Button
+            variant="outlined"
+            disabled={!newTodoTitle}
+            onClick={handldeAddTodo}
+            sx={{
+              width: '50%',
+            }}
+          >
+            Add task
+          </Button>
+        </Stack>
+      </Paper>
+
       <Grid
         container
         direction="row"

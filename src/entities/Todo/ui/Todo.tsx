@@ -44,8 +44,7 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
     <Box
       sx={{
         flexGrow: 1,
-        width: 'fit-content', // allow it to grow/shrink with parent
-        minWidth: 0, // allow children to shrink in flex layouts
+        width: 'min(50%, 500px)',
       }}
     >
       <Paper elevation={16} sx={{ padding: 2 }}>
@@ -81,12 +80,14 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   if (e.key === 'Enter') saveChanges();
                 }}
                 slotProps={{
+                  root: { sx: { width: '100%' } },
                   input: {
                     disableUnderline: false,
                     sx: {
                       padding: 0,
                       margin: 0,
                       textAlign: 'start',
+                      width: '100%',
                     },
                   },
                   htmlInput: {
@@ -95,18 +96,19 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                       fontSize: 26,
                       padding: 0,
                       margin: 0,
-                      height: 'auto',
                       lineHeight: 1.6,
+                      height: 'auto',
                     },
                   },
                 }}
+                sx={{ width: '100%' }}
               />
             ) : (
               <Stack
                 direction="row"
                 spacing={2}
                 sx={{
-                  flexWrap: 'wrap',
+                  flexWrap: 'nowrap',
                   alignContent: 'space-between',
                   justifyContent: 'space-between',
                   width: '100%',
@@ -136,7 +138,7 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
             )}
           </Stack>
 
-          <Stack>
+          <Stack sx={{ display: 'inline-block' }}>
             {editingField === 'description' ? (
               <TextField
                 multiline
@@ -149,13 +151,29 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                 onKeyDown={e => {
                   if (e.key === 'Enter') saveChanges();
                 }}
+                slotProps={{
+                  input: {
+                    sx: {
+                      display: 'block',
+                      width: '100%',
+                      fontWeight: 300,
+                      fontSize: 16,
+                      lineHeight: 1.5,
+                      padding: 0,
+                      margin: 0,
+                      resize: 'none',
+                    },
+                  },
+                  root: {
+                    sx: {
+                      display: 'block',
+                      width: '100%',
+                    },
+                  },
+                }}
                 sx={{
-                  minWidth: 0, // important for flex shrink
-                  '& .MuiInputBase-input': {
-                    fontWeight: 300,
-                    fontSize: 16,
-                    padding: 0,
-                    margin: 0,
+                  '& .MuiInput-underline:before, & .MuiInput-underline:after': {
+                    display: 'none',
                   },
                 }}
               />
@@ -166,6 +184,8 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   cursor: 'pointer',
                   fontWeight: 300,
                   fontSize: 16,
+                  lineHeight: 1.5,
+                  whiteSpace: 'pre-wrap', // matches multiline textfield behavior
                 }}
                 onDoubleClick={() => {
                   console.log('Double clicked description');
