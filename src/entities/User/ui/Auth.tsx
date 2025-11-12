@@ -15,6 +15,7 @@ import { rootApi } from '../../../shared/api/rootApi';
 import type { UserType } from '../model/userType';
 import { useSnackbar } from 'notistack';
 import type { AxiosError } from 'axios';
+import { useAuthStore } from '../model/store/useAuthStore'; // Импортируйте store
 
 interface AuthProps {
   onAuthSuccess: (user: { access_token: string; username: string }) => void;
@@ -24,54 +25,40 @@ interface AuthProps {
 // Принимает проп onAuthSuccess — функцию, вызываемую при успешной авторизации пользователя.
 const Auth = ({ onAuthSuccess }: AuthProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  // loginFormName — состояние, определяющее, какая форма отображается: "login" или "register"
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>(
     'login'
   );
-  // username — состояние для хранения введённого email/имени пользователя
   const [username, setUsername] = useState('');
-  // password — состояние для хранения введённого пароля
   const [password, setPassword] = useState('');
-  // isLoading — состояние, показывающее, выполняется ли сейчас запрос к серверу
   const [isLoading, setIsLoading] = useState(false);
-  // errorMessage — состояние для хранения текста ошибки, если она возникла
 
-  // handleLoginFormChange — обработчик переключения между формой входа и регистрации
-  const handleLoginFormChange = (
-    _: React.MouseEvent<HTMLElement>,
-    newForm: 'login' | 'register'
-  ) => {
-    if (newForm) setLoginFormName(newForm);
-  };
+  const setAuth = useAuthStore(state => state.setAuth); // Получите функцию setAuth из store
 
   // handleSubmit — обработчик отправки формы (авторизация или регистрация)
   const handleSubmit = async () => {
     try {
       setIsLoading(true); // Включаем индикатор загрузки
 
-      // Выбираем URL для запроса в зависимости от типа формы
       const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
-
       const loginData = await rootApi.post<UserType>(url, {
-        username: username,
-        password: password,
+        username,
+        password,
       });
+
       const accessToken = loginData.data.access_token;
 
-      // Сохраняем токен в localStorage
+      // Сохраняем токен в Zustand store
+      setAuth(accessToken, loginData.data.username);
       localStorage.setItem('access_token', accessToken);
 
       // Вызываем функцию onAuthSuccess, передавая данные пользователя
       onAuthSuccess(loginData.data);
-      enqueueSnackbar('Wellcome!', { variant: 'success' });
+      enqueueSnackbar('Welcome!', { variant: 'success' });
     } catch (error) {
-      // В случае ошибки — сохраняем текст ошибки для отображения
       const axiosError = error as AxiosError<{ message: string }>;
       enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
-      // enqueueSnackbar(errorMessage, { variant: 'error' });
     } finally {
-      // Отключаем индикатор загрузки
-      setIsLoading(false);
+      setIsLoading(false); // Отключаем индикатор загрузки
     }
   };
 
@@ -99,7 +86,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
           <ToggleButtonGroup
             value={loginFormName}
             exclusive
-            onChange={handleLoginFormChange}
+            onChange={(_, newForm) => newForm && setLoginFormName(newForm)}
             disabled={isLoading}
             fullWidth
           >

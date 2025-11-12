@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
 interface AuthState {
   accessToken: string | null;
@@ -7,9 +8,11 @@ interface AuthState {
   clearAuth: () => void;
 }
 
-export const useAuthStore = create<AuthState>(set => ({
-  accessToken: null,
-  username: null,
-  setAuth: (accessToken, username) => set({ accessToken, username }),
-  clearAuth: () => set({ accessToken: null, username: null }),
-}));
+export const useAuthStore = create<AuthState>()(
+  devtools(set => ({
+    accessToken: null,
+    username: null,
+    setAuth: (accessToken, username) => set({ accessToken, username }),
+    clearAuth: () => set({ accessToken: null, username: null }),
+  }))
+);
