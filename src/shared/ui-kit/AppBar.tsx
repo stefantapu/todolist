@@ -10,17 +10,21 @@ import {
   IconButton,
 } from '@mui/material';
 import { useTodosStore } from '../../entities/Todo/model/store/useTodosStore';
+import { useContext } from 'react';
+import { UserContext } from '../../entities/User/model/provider/UserContext';
 
 interface Props {
   toggleTheme: () => void;
   mode: 'light' | 'dark';
-  access_token?: string;
-  username?: string;
 }
 
-const AppBar = ({ toggleTheme, mode, username }: Props) => {
+const AppBar = ({ toggleTheme, mode }: Props) => {
   const todos = useTodosStore(state => state.todos);
   const undoneTodos = todos.filter(todo => !todo.completed);
+  const userContext = useContext(UserContext);
+
+  const username = userContext.user?.username;
+
   function logOut() {
     localStorage.clear();
     window.location.reload();

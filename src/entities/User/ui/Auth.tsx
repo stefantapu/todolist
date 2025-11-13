@@ -10,20 +10,17 @@ import {
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import { PasswordRounded } from '@mui/icons-material';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { rootApi } from '../../../shared/api/rootApi';
 import type { UserType } from '../model/userType';
 import { useSnackbar } from 'notistack';
 import type { AxiosError } from 'axios';
-import { useAuthStore } from '../model/store/useAuthStore'; // Импортируйте store
-
-interface AuthProps {
-  onAuthSuccess: (user: { access_token: string; username: string }) => void;
-}
+import { useAuthStore } from '../model/store/useAuthStore';
+import { UserContext } from '../model/provider/UserContext';
 
 // Компонент Auth отвечает за отображение формы авторизации и регистрации.
 // Принимает проп onAuthSuccess — функцию, вызываемую при успешной авторизации пользователя.
-const Auth = ({ onAuthSuccess }: AuthProps) => {
+const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>(
     'login'
@@ -31,38 +28,33 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   const setAuth = useAuthStore(state => state.setAuth); // Получите функцию setAuth из store
+  const { setUser } = useContext(UserContext);
 
   // handleSubmit — обработчик отправки формы (авторизация или регистрация)
   const handleSubmit = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true); // Включаем индикатор загрузки
-
       const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
       const loginData = await rootApi.post<UserType>(url, {
         username,
         password,
       });
-
       const accessToken = loginData.data.access_token;
 
       // Сохраняем токен в Zustand store
       setAuth(accessToken, loginData.data.username);
       localStorage.setItem('access_token', accessToken);
-
-      // Вызываем функцию onAuthSuccess, передавая данные пользователя
-      onAuthSuccess(loginData.data);
+      setUser(loginData.data);
       enqueueSnackbar('Welcome!', { variant: 'success' });
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
       enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
     } finally {
-      setIsLoading(false); // Отключаем индикатор загрузки
+      setIsLoading(false);
     }
   };
 
-  // Возвращаем JSX — разметку формы авторизации/регистрации
   return (
     <Container
       maxWidth="sm"
@@ -70,7 +62,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
         justifyContent: 'center',
         alignItems: 'center',
         alignContent: 'center',
-        minHeight: '100vh', // Центрируем форму по вертикали
+        height: '90vh',
       }}
     >
       <Paper elevation={3} sx={{ padding: 5 }}>

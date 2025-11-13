@@ -14,12 +14,12 @@ export const autoLogin = () => {
         return { username: decodedToken.username, access_token: token };
       }
       localStorage.removeItem('access_token');
-      return null;
+      return undefined;
     } catch (error) {
       console.error(error);
       localStorage.removeItem('access_token');
-      return null;
+      return undefined;
     }
   }
-  return null;
+  return undefined;
 };

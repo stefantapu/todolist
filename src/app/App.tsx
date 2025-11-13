@@ -4,36 +4,44 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import './App.css';
 
-import { useState } from 'react';
 import AppBar from '../shared/ui-kit/AppBar.tsx';
 import Auth from '../entities/User/ui/Auth.tsx';
 import { ThemeProviderCustom, useThemeMode } from './ThemeProviderCustom.tsx';
-import type { UserType } from '../entities/User/model/userType.ts';
 import Todos from '../entities/Todo/ui/Todos.tsx';
-import { autoLogin } from '../shared/util/autoLogin.ts';
 import { SnackbarProvider } from 'notistack';
+import { UserProvider } from '../entities/User/model/provider/UserProvider.tsx';
+import { UserContext } from '../entities/User/model/provider/UserContext.tsx';
+import { useContext } from 'react';
 
 const AppContent = () => {
-  const userFromLS = autoLogin();
-  const [user, setUser] = useState<UserType | null>(userFromLS);
   const { mode, toggleTheme } = useThemeMode();
+  const userContext = useContext(UserContext);
+  const user = userContext.user;
 
-  // console.log('user:', user);
+  // const setUser = userContext.setUser;
 
   return (
     <>
-      <AppBar toggleTheme={toggleTheme} mode={mode} username={user?.username} />
-      {user ? <Todos /> : <Auth onAuthSuccess={setUser} />}
+      <AppBar toggleTheme={toggleTheme} mode={mode} />
+      {user ? (
+        <Todos />
+      ) : (
+        <Auth
+        // onAuthSuccess={setUser}
+        />
+      )}
     </>
   );
 };
 
 const App = () => (
-  <SnackbarProvider>
-    <ThemeProviderCustom>
-      <AppContent />
-    </ThemeProviderCustom>
-  </SnackbarProvider>
+  <UserProvider>
+    <SnackbarProvider>
+      <ThemeProviderCustom>
+        <AppContent />
+      </ThemeProviderCustom>
+    </SnackbarProvider>
+  </UserProvider>
 );
 
 export default App;
