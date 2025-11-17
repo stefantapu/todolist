@@ -10,13 +10,13 @@ import {
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import { PasswordRounded } from '@mui/icons-material';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { rootApi } from '../../../shared/api/rootApi';
 import type { UserType } from '../model/userType';
 import { useSnackbar } from 'notistack';
 import type { AxiosError } from 'axios';
 import { useAuthStore } from '../model/store/useAuthStore';
-import { UserContext } from '../model/provider/UserContext';
+import { useUserStore } from '../model/provider/UserContext';
 
 // Компонент Auth отвечает за отображение формы авторизации и регистрации.
 // Принимает проп onAuthSuccess — функцию, вызываемую при успешной авторизации пользователя.
@@ -29,7 +29,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const setAuth = useAuthStore(state => state.setAuth); // Получите функцию setAuth из store
-  const { setUser } = useContext(UserContext);
+  const { setUser } = useUserStore();
 
   // handleSubmit — обработчик отправки формы (авторизация или регистрация)
   const handleSubmit = async () => {

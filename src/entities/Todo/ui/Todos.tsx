@@ -101,7 +101,8 @@ const Todos = () => {
         sx={{
           p: 2,
           justifyContent: 'flex-start',
-          alignItems: 'center',
+          alignItems: 'stretch',
+          height: '100%',
         }}
       >
         {/* Рендерим каждую задачу через компонент Todo */}

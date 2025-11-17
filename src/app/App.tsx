@@ -10,26 +10,17 @@ import { ThemeProviderCustom, useThemeMode } from './ThemeProviderCustom.tsx';
 import Todos from '../entities/Todo/ui/Todos.tsx';
 import { SnackbarProvider } from 'notistack';
 import { UserProvider } from '../entities/User/model/provider/UserProvider.tsx';
-import { UserContext } from '../entities/User/model/provider/UserContext.tsx';
-import { useContext } from 'react';
+import { useUserStore } from '../entities/User/model/provider/UserContext.tsx';
 
 const AppContent = () => {
   const { mode, toggleTheme } = useThemeMode();
-  const userContext = useContext(UserContext);
-  const user = userContext.user;
 
-  // const setUser = userContext.setUser;
+  const { user } = useUserStore();
 
   return (
     <>
       <AppBar toggleTheme={toggleTheme} mode={mode} />
-      {user ? (
-        <Todos />
-      ) : (
-        <Auth
-        // onAuthSuccess={setUser}
-        />
-      )}
+      {user ? <Todos /> : <Auth />}
     </>
   );
 };

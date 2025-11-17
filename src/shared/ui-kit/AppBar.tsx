@@ -10,8 +10,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { useTodosStore } from '../../entities/Todo/model/store/useTodosStore';
-import { useContext } from 'react';
-import { UserContext } from '../../entities/User/model/provider/UserContext';
+import { useUserStore } from '../../entities/User/model/provider/UserContext';
 
 interface Props {
   toggleTheme: () => void;
@@ -21,9 +20,9 @@ interface Props {
 const AppBar = ({ toggleTheme, mode }: Props) => {
   const todos = useTodosStore(state => state.todos);
   const undoneTodos = todos.filter(todo => !todo.completed);
-  const userContext = useContext(UserContext);
 
-  const username = userContext.user?.username;
+  const { user } = useUserStore();
+  const username = user?.username;
 
   function logOut() {
     localStorage.clear();
@@ -31,7 +30,6 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
     // window.location.href = '/login'; use when pagination available
   }
 
-  //   const { username } = props;
   return (
     <MuiAppBar position="sticky">
       <Toolbar>

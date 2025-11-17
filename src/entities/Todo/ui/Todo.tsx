@@ -45,10 +45,11 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
       sx={{
         flexGrow: 1,
         width: 'min(50%, 500px)',
+        height: '100%',
       }}
     >
-      <Paper elevation={16} sx={{ padding: 2 }}>
-        <Stack spacing={4}>
+      <Paper elevation={16} sx={{ padding: 2, height: '100%' }}>
+        <Stack spacing={4} sx={{ height: '100%' }}>
           <Stack
             direction="row"
             sx={{

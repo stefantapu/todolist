@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { createContext, useContext } from 'react';
 import type { UserType } from '../userType';
 
 type UserContext = {
@@ -10,3 +10,7 @@ export const UserContext = createContext<UserContext>({
   user: undefined,
   setUser: () => {},
 });
+
+export const useUserStore = () => {
+  return useContext(UserContext);
+};
