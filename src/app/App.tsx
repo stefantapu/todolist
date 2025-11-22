@@ -10,12 +10,13 @@ import { ThemeProviderCustom, useThemeMode } from './ThemeProviderCustom.tsx';
 import Todos from '../entities/Todo/ui/Todos.tsx';
 import { SnackbarProvider } from 'notistack';
 import { UserProvider } from '../entities/User/model/provider/UserProvider.tsx';
-import { useUserStore } from '../entities/User/model/provider/UserContext.tsx';
+import { store } from './store.ts';
+import { Provider, useSelector } from 'react-redux';
+import { selectUser } from '../entities/User/model/store/userStore.ts';
 
 const AppContent = () => {
   const { mode, toggleTheme } = useThemeMode();
-
-  const { user } = useUserStore();
+  const user = useSelector(selectUser); // Use useSelector to get the user state
 
   return (
     <>
@@ -26,13 +27,15 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <UserProvider>
-    <SnackbarProvider>
-      <ThemeProviderCustom>
-        <AppContent />
-      </ThemeProviderCustom>
-    </SnackbarProvider>
-  </UserProvider>
+  <Provider store={store}>
+    <UserProvider>
+      <SnackbarProvider>
+        <ThemeProviderCustom>
+          <AppContent />
+        </ThemeProviderCustom>
+      </SnackbarProvider>
+    </UserProvider>
+  </Provider>
 );
 
 export default App;

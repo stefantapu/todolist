@@ -15,11 +15,9 @@ import { rootApi } from '../../../shared/api/rootApi';
 import type { UserType } from '../model/userType';
 import { useSnackbar } from 'notistack';
 import type { AxiosError } from 'axios';
-import { useAuthStore } from '../model/store/useAuthStore';
-import { useUserStore } from '../model/provider/UserContext';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../model/store/userStore';
 
-// Компонент Auth отвечает за отображение формы авторизации и регистрации.
-// Принимает проп onAuthSuccess — функцию, вызываемую при успешной авторизации пользователя.
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>(
@@ -28,10 +26,8 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const setAuth = useAuthStore(state => state.setAuth); // Получите функцию setAuth из store
-  const { setUser } = useUserStore();
+  const dispatch = useDispatch();
 
-  // handleSubmit — обработчик отправки формы (авторизация или регистрация)
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
@@ -42,10 +38,12 @@ const Auth = () => {
       });
       const accessToken = loginData.data.access_token;
 
-      // Сохраняем токен в Zustand store
-      setAuth(accessToken, loginData.data.username);
+      // Store the access token in local storage
       localStorage.setItem('access_token', accessToken);
-      setUser(loginData.data);
+
+      // Dispatch the user data to Redux store
+      dispatch(setUser(loginData.data));
+
       enqueueSnackbar('Welcome!', { variant: 'success' });
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
