@@ -15,9 +15,12 @@ import { rootApi } from '../../../shared/api/rootApi';
 import type { UserType } from '../model/userType';
 import { useSnackbar } from 'notistack';
 import type { AxiosError } from 'axios';
-import { useDispatch } from 'react-redux';
-import { setIsLoading, setUser } from '../model/store/userStore';
-import { useAppDispatch } from '../../../app/store';
+import {
+  selectIsLoading,
+  setIsLoading,
+  setUser,
+} from '../model/store/userStore';
+import { useAppDispatch, useAppSelector } from '../../../app/store';
 
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -27,7 +30,7 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useAppDispatch();
-  const isLoading = false;
+  const isLoading = useAppSelector(selectIsLoading);
 
   const handleSubmit = async () => {
     dispatch(setIsLoading(true));
@@ -37,11 +40,7 @@ const Auth = () => {
         username,
         password,
       });
-      const accessToken = loginData.data.access_token;
 
-      localStorage.setItem('access_token', accessToken);
-
-      // Dispatch user data to Redux store
       dispatch(setUser(loginData.data));
 
       enqueueSnackbar('Welcome!', { variant: 'success' });

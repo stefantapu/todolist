@@ -1,7 +1,10 @@
 import { jwtDecode, type JwtPayload } from 'jwt-decode';
+import { useAppSelector } from '../../app/store';
+import { selectUser } from '../../entities/User/model/store/userStore';
 
-export const autoLogin = () => {
-  const token = localStorage.getItem('access_token');
+export const useAutoLogin = () => {
+  const user = useAppSelector(selectUser);
+  const token = user?.access_token;
 
   if (token) {
     try {

@@ -12,10 +12,11 @@ import { SnackbarProvider } from 'notistack';
 import { UserProvider } from '../entities/User/model/provider/UserProvider.tsx';
 import { store, useAppSelector } from './store.ts';
 import { Provider } from 'react-redux';
+import { selectUser } from '../entities/User/model/store/userStore.ts';
 
 const AppContent = () => {
   const { mode, toggleTheme } = useThemeMode();
-  const user = useAppSelector(state => state.userSlice.user);
+  const user = useAppSelector(selectUser);
 
   return (
     <>

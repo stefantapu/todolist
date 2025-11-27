@@ -1,10 +1,10 @@
 import { useState, type PropsWithChildren } from 'react';
-import { autoLogin } from '../../../../shared/util/autoLogin';
+import { useAutoLogin } from '../../../../shared/util/autoLogin';
 import type { UserType } from '../userType';
 import { UserContext } from './UserContext';
 
 export const UserProvider = ({ children }: PropsWithChildren) => {
-  const userFromLS = autoLogin();
+  const userFromLS = useAutoLogin();
   const [user, setUser] = useState<UserType | undefined>(userFromLS);
 
   const handleSetUser = (user?: UserType) => {

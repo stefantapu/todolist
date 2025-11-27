@@ -10,7 +10,11 @@ import {
   IconButton,
 } from '@mui/material';
 import { useTodosStore } from '../../entities/Todo/model/store/useTodosStore';
-import { useAppSelector } from '../../app/store';
+import { useAppDispatch, useAppSelector } from '../../app/store';
+import {
+  selectUser,
+  removeUser,
+} from '../../entities/User/model/store/userStore';
 
 interface Props {
   toggleTheme: () => void;
@@ -20,15 +24,12 @@ interface Props {
 const AppBar = ({ toggleTheme, mode }: Props) => {
   const todos = useTodosStore(state => state.todos);
   const undoneTodos = todos.filter(todo => !todo.completed);
-
-  const user = useAppSelector(state => state.userSlice.user);
-
+  const dispatch = useAppDispatch();
+  const user = useAppSelector(selectUser);
   const username = user?.username;
 
   function logOut() {
-    localStorage.clear();
-    window.location.reload();
-    // window.location.href = '/login'; use when pagination available
+    dispatch(removeUser());
   }
 
   return (
