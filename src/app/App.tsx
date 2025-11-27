@@ -10,13 +10,12 @@ import { ThemeProviderCustom, useThemeMode } from './ThemeProviderCustom.tsx';
 import Todos from '../entities/Todo/ui/Todos.tsx';
 import { SnackbarProvider } from 'notistack';
 import { UserProvider } from '../entities/User/model/provider/UserProvider.tsx';
-import { store } from './store.ts';
-import { Provider, useSelector } from 'react-redux';
-import { selectUser } from '../entities/User/model/store/userStore.ts';
+import { store, useAppSelector } from './store.ts';
+import { Provider } from 'react-redux';
 
 const AppContent = () => {
   const { mode, toggleTheme } = useThemeMode();
-  const user = useSelector(selectUser); // Use useSelector to get the user state
+  const user = useAppSelector(state => state.userSlice.user);
 
   return (
     <>

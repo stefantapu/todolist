@@ -10,7 +10,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { useTodosStore } from '../../entities/Todo/model/store/useTodosStore';
-import { useUserStore } from '../../entities/User/model/provider/UserContext';
+import { useAppSelector } from '../../app/store';
 
 interface Props {
   toggleTheme: () => void;
@@ -21,7 +21,8 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
   const todos = useTodosStore(state => state.todos);
   const undoneTodos = todos.filter(todo => !todo.completed);
 
-  const { user } = useUserStore();
+  const user = useAppSelector(state => state.userSlice.user);
+
   const username = user?.username;
 
   function logOut() {

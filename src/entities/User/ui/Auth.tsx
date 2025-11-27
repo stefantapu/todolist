@@ -16,7 +16,8 @@ import type { UserType } from '../model/userType';
 import { useSnackbar } from 'notistack';
 import type { AxiosError } from 'axios';
 import { useDispatch } from 'react-redux';
-import { setUser } from '../model/store/userStore';
+import { setIsLoading, setUser } from '../model/store/userStore';
+import { useAppDispatch } from '../../../app/store';
 
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -25,11 +26,11 @@ const Auth = () => {
   );
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
+  const isLoading = false;
 
   const handleSubmit = async () => {
-    setIsLoading(true);
+    dispatch(setIsLoading(true));
     try {
       const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
       const loginData = await rootApi.post<UserType>(url, {
@@ -38,10 +39,9 @@ const Auth = () => {
       });
       const accessToken = loginData.data.access_token;
 
-      // Store the access token in local storage
       localStorage.setItem('access_token', accessToken);
 
-      // Dispatch the user data to Redux store
+      // Dispatch user data to Redux store
       dispatch(setUser(loginData.data));
 
       enqueueSnackbar('Welcome!', { variant: 'success' });
@@ -49,7 +49,7 @@ const Auth = () => {
       const axiosError = error as AxiosError<{ message: string }>;
       enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
     } finally {
-      setIsLoading(false);
+      dispatch(setIsLoading(false));
     }
   };
 
