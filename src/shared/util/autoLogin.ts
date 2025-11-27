@@ -8,8 +8,6 @@ export const autoLogin = () => {
       const decodedToken = jwtDecode<JwtPayload & { username: string }>(token);
 
       if (decodedToken.exp && decodedToken.exp * 1000 >= Date.now()) {
-        // Устанавливаем состояние аутентификации в Zustand
-        // useAuthStore.getState().setAuth(token, decodedToken.username);
         return { username: decodedToken.username, access_token: token };
       }
       localStorage.removeItem('access_token');
