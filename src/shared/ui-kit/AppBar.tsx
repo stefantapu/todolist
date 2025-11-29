@@ -9,20 +9,29 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
+import { useTodosStore } from '../../entities/Todo/model/store/useTodosStore';
+import { useAppDispatch, useAppSelector } from '../../app/store';
+import {
+  selectUser,
+  removeUser,
+} from '../../entities/User/model/store/userStore';
 
 interface Props {
   toggleTheme: () => void;
   mode: 'light' | 'dark';
-  access_token?: string;
-  username?: string;
 }
 
-const AppBar = ({ toggleTheme, mode, username }: Props) => {
+const AppBar = ({ toggleTheme, mode }: Props) => {
+  const todos = useTodosStore(state => state.todos);
+  const undoneTodos = todos.filter(todo => !todo.completed);
+  const dispatch = useAppDispatch();
+  const user = useAppSelector(selectUser);
+  const username = user?.username;
+
   function logOut() {
-    localStorage.clear();
+    dispatch(removeUser());
   }
 
-  //   const { username } = props;
   return (
     <MuiAppBar position="sticky">
       <Toolbar>
@@ -31,7 +40,9 @@ const AppBar = ({ toggleTheme, mode, username }: Props) => {
         </Typography>
 
         <div style={{ display: 'flex', gap: '10px' }}>
-          {username && <Button color="inherit">To Do's</Button>}
+          {username && (
+            <Button color="inherit">To Do's{' - ' + undoneTodos.length}</Button>
+          )}
 
           <Button color="inherit">About</Button>
 

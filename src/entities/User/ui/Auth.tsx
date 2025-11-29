@@ -15,67 +15,43 @@ import { rootApi } from '../../../shared/api/rootApi';
 import type { UserType } from '../model/userType';
 import { useSnackbar } from 'notistack';
 import type { AxiosError } from 'axios';
+import {
+  selectIsLoading,
+  setIsLoading,
+  setUser,
+} from '../model/store/userStore';
+import { useAppDispatch, useAppSelector } from '../../../app/store';
 
-interface AuthProps {
-  onAuthSuccess: (user: { access_token: string; username: string }) => void;
-}
-
-// Компонент Auth отвечает за отображение формы авторизации и регистрации.
-// Принимает проп onAuthSuccess — функцию, вызываемую при успешной авторизации пользователя.
-const Auth = ({ onAuthSuccess }: AuthProps) => {
+const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
-  // loginFormName — состояние, определяющее, какая форма отображается: "login" или "register"
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>(
     'login'
   );
-  // username — состояние для хранения введённого email/имени пользователя
   const [username, setUsername] = useState('');
-  // password — состояние для хранения введённого пароля
   const [password, setPassword] = useState('');
-  // isLoading — состояние, показывающее, выполняется ли сейчас запрос к серверу
-  const [isLoading, setIsLoading] = useState(false);
-  // errorMessage — состояние для хранения текста ошибки, если она возникла
+  const dispatch = useAppDispatch();
+  const isLoading = useAppSelector(selectIsLoading);
 
-  // handleLoginFormChange — обработчик переключения между формой входа и регистрации
-  const handleLoginFormChange = (
-    _: React.MouseEvent<HTMLElement>,
-    newForm: 'login' | 'register'
-  ) => {
-    if (newForm) setLoginFormName(newForm);
-  };
-
-  // handleSubmit — обработчик отправки формы (авторизация или регистрация)
   const handleSubmit = async () => {
+    dispatch(setIsLoading(true));
     try {
-      setIsLoading(true); // Включаем индикатор загрузки
-
-      // Выбираем URL для запроса в зависимости от типа формы
       const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
-
       const loginData = await rootApi.post<UserType>(url, {
-        username: username,
-        password: password,
+        username,
+        password,
       });
-      const accessToken = loginData.data.access_token;
 
-      // Сохраняем токен в localStorage
-      localStorage.setItem('access_token', accessToken);
+      dispatch(setUser(loginData.data));
 
-      // Вызываем функцию onAuthSuccess, передавая данные пользователя
-      onAuthSuccess(loginData.data);
-      enqueueSnackbar('Wellcome!', { variant: 'success' });
+      enqueueSnackbar('Welcome!', { variant: 'success' });
     } catch (error) {
-      // В случае ошибки — сохраняем текст ошибки для отображения
       const axiosError = error as AxiosError<{ message: string }>;
       enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
-      // enqueueSnackbar(errorMessage, { variant: 'error' });
     } finally {
-      // Отключаем индикатор загрузки
-      setIsLoading(false);
+      dispatch(setIsLoading(false));
     }
   };
 
-  // Возвращаем JSX — разметку формы авторизации/регистрации
   return (
     <Container
       maxWidth="sm"
@@ -83,7 +59,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
         justifyContent: 'center',
         alignItems: 'center',
         alignContent: 'center',
-        minHeight: '100vh', // Центрируем форму по вертикали
+        height: '90vh',
       }}
     >
       <Paper elevation={3} sx={{ padding: 5 }}>
@@ -99,7 +75,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
           <ToggleButtonGroup
             value={loginFormName}
             exclusive
-            onChange={handleLoginFormChange}
+            onChange={(_, newForm) => newForm && setLoginFormName(newForm)}
             disabled={isLoading}
             fullWidth
           >
@@ -132,7 +108,7 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
           />
           {/* Поле для ввода пароля */}
           <TextField
-            label="Пароль"
+            label="Password"
             type="password"
             fullWidth
             value={password}
