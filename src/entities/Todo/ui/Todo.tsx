@@ -7,7 +7,8 @@ import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import { Grid, Paper, Stack, TextField } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { useTodosStore } from '../model/store/useTodosStore';
+import { removeTodo } from '../model/store/todosStore';
+import { useDispatch } from 'react-redux';
 
 type TodoProps = {
   todo: TodoType;
@@ -15,7 +16,10 @@ type TodoProps = {
 };
 
 export const Todo = ({ todo, setTodo }: TodoProps) => {
-  const deleteTodo = useTodosStore(state => state.deleteTodo);
+  const dispatch = useDispatch();
+  const deleteTodo = (id: string) => {
+    dispatch(removeTodo(id));
+  };
 
   const { enqueueSnackbar } = useSnackbar();
   const [editingField, setEditingField] = useState<

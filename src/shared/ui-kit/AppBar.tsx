@@ -9,12 +9,12 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import { useTodosStore } from '../../entities/Todo/model/store/useTodosStore';
 import { useAppDispatch, useAppSelector } from '../../app/store';
 import {
   selectUser,
   removeUser,
 } from '../../entities/User/model/store/userStore';
+import { selectTodos } from '../../entities/Todo/model/store/todosStore';
 
 interface Props {
   toggleTheme: () => void;
@@ -22,9 +22,10 @@ interface Props {
 }
 
 const AppBar = ({ toggleTheme, mode }: Props) => {
-  const todos = useTodosStore(state => state.todos);
-  const undoneTodos = todos.filter(todo => !todo.completed);
   const dispatch = useAppDispatch();
+  const todos = useAppSelector(selectTodos);
+  const undoneTodos = todos.filter(todo => !todo.completed);
+
   const user = useAppSelector(selectUser);
   const username = user?.username;
 

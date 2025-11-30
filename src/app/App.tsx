@@ -9,7 +9,6 @@ import Auth from '../entities/User/ui/Auth.tsx';
 import { ThemeProviderCustom, useThemeMode } from './ThemeProviderCustom.tsx';
 import Todos from '../entities/Todo/ui/Todos.tsx';
 import { SnackbarProvider } from 'notistack';
-import { UserProvider } from '../entities/User/model/provider/UserProvider.tsx';
 import { store, useAppSelector } from './store.ts';
 import { Provider } from 'react-redux';
 import { selectUser } from '../entities/User/model/store/userStore.ts';
@@ -28,13 +27,11 @@ const AppContent = () => {
 
 const App = () => (
   <Provider store={store}>
-    <UserProvider>
-      <SnackbarProvider>
-        <ThemeProviderCustom>
-          <AppContent />
-        </ThemeProviderCustom>
-      </SnackbarProvider>
-    </UserProvider>
+    <SnackbarProvider>
+      <ThemeProviderCustom>
+        <AppContent />
+      </ThemeProviderCustom>
+    </SnackbarProvider>
   </Provider>
 );
 
