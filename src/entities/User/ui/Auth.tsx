@@ -41,7 +41,16 @@ const Auth = () => {
         password,
       });
 
+      // Persist user in redux
       dispatch(setUser(loginData.data));
+      // Also persist token (and user) in localStorage so the session can survive reloads
+      try {
+        localStorage.setItem('access_token', loginData.data.access_token);
+        localStorage.setItem('user', JSON.stringify(loginData.data));
+      } catch (e) {
+        // Quieten any localStorage errors (e.g., storage disabled)
+        console.error('Failed to persist user to localStorage', e);
+      }
 
       enqueueSnackbar('Welcome!', { variant: 'success' });
     } catch (error) {

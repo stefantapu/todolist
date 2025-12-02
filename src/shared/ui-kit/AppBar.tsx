@@ -14,7 +14,7 @@ import {
   selectUser,
   removeUser,
 } from '../../entities/User/model/store/userStore';
-import { selectTodos } from '../../entities/Todo/model/store/todosStore';
+import { selectUnDoneTodosLenght } from '../../entities/Todo/model/store/selectors/selectUnDoneTodos';
 
 interface Props {
   toggleTheme: () => void;
@@ -23,14 +23,15 @@ interface Props {
 
 const AppBar = ({ toggleTheme, mode }: Props) => {
   const dispatch = useAppDispatch();
-  const todos = useAppSelector(selectTodos);
-  const undoneTodos = todos.filter(todo => !todo.completed);
 
+  // const undoneTodos = todos.filter(todo => !todo.completed);
+  const undoneTodos = useAppSelector(selectUnDoneTodosLenght);
   const user = useAppSelector(selectUser);
   const username = user?.username;
 
   function logOut() {
     dispatch(removeUser());
+    localStorage.clear();
   }
 
   return (
@@ -42,7 +43,7 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
 
         <div style={{ display: 'flex', gap: '10px' }}>
           {username && (
-            <Button color="inherit">To Do's{' - ' + undoneTodos.length}</Button>
+            <Button color="inherit">To Do's{' - ' + undoneTodos}</Button>
           )}
 
           <Button color="inherit">About</Button>
