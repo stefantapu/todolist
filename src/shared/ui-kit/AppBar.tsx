@@ -15,6 +15,7 @@ import {
   removeUser,
 } from '../../entities/User/model/store/userStore';
 import { selectUnDoneTodosLenght } from '../../entities/Todo/model/store/selectors/selectUnDoneTodos';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface Props {
   toggleTheme: () => void;
@@ -24,14 +25,19 @@ interface Props {
 const AppBar = ({ toggleTheme, mode }: Props) => {
   const dispatch = useAppDispatch();
 
-  // const undoneTodos = todos.filter(todo => !todo.completed);
   const undoneTodos = useAppSelector(selectUnDoneTodosLenght);
   const user = useAppSelector(selectUser);
   const username = user?.username;
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isAboutPage = location.pathname === '/about';
+
   function logOut() {
     dispatch(removeUser());
     localStorage.clear();
+    navigate('/auth');
   }
 
   return (
@@ -46,7 +52,15 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
             <Button color="inherit">To Do's{' - ' + undoneTodos}</Button>
           )}
 
-          <Button color="inherit">About</Button>
+          {isAboutPage ? (
+            <Button color="inherit" onClick={() => navigate('/')}>
+              Home
+            </Button>
+          ) : (
+            <Button color="inherit" onClick={() => navigate('/about')}>
+              About
+            </Button>
+          )}
 
           <IconButton color="inherit" onClick={toggleTheme}>
             {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
@@ -64,7 +78,9 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
               </Button>
             </>
           ) : (
-            <Button color="inherit">Login</Button>
+            <Button color="inherit" onClick={() => navigate('/')}>
+              Login
+            </Button>
           )}
         </div>
       </Toolbar>

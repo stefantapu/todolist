@@ -4,19 +4,22 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import './App.css';
 
-import Auth from '../entities/User/ui/Auth.tsx';
 import { ThemeProviderCustom } from './ThemeProviderCustom.tsx';
-import Todos from '../entities/Todo/ui/Todos.tsx';
 import { SnackbarProvider } from 'notistack';
 import { store, useAppSelector } from './store.ts';
 import { Provider } from 'react-redux';
 import { selectUser } from '../entities/User/model/store/userStore.ts';
 import AppRoutes from './appRoutes.tsx';
+import { Navigate } from 'react-router-dom';
+import Todos from '../entities/Todo/ui/Todos.tsx';
 
 export const AppContent = () => {
   const user = useAppSelector(selectUser);
 
-  return <>{user ? <Todos /> : <Auth />}</>;
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+  return <Todos />;
 };
 
 const App = () => (

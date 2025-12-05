@@ -21,6 +21,7 @@ import {
   setUser,
 } from '../model/store/userStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
+import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -31,6 +32,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
+  const navigate = useNavigate();
 
   const handleSubmit = async () => {
     dispatch(setIsLoading(true));
@@ -53,6 +55,7 @@ const Auth = () => {
       }
 
       enqueueSnackbar('Welcome!', { variant: 'success' });
+      navigate('/todos');
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
       enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
