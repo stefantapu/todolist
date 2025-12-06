@@ -24,8 +24,6 @@ import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
-  // console.log({ user }, user);
-
   const { enqueueSnackbar } = useSnackbar();
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>(
     'login'

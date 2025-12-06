@@ -5,7 +5,7 @@ import Layout from '../entities/App/ui/Layout.tsx';
 import Auth from '../entities/User/ui/Auth.tsx';
 import Todos from '../entities/Todo/ui/Todos.tsx';
 import { ProtectedRoute } from './ProtectedRoute.tsx';
-import { BlockAuthPage } from './BlockAuthOnLoggedIn.tsx';
+import { BlockAuthPage } from './blockAuthPage.tsx';
 
 export default function AppRoutes() {
   return (
