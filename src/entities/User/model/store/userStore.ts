@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { UserType } from '../userType';
+import { loadUserFromLS } from '../../../../shared/util/loadUserFromLS';
 
 type UserStore = {
   user: null | UserType;
@@ -7,7 +8,7 @@ type UserStore = {
 };
 
 const initialState: UserStore = {
-  user: null,
+  user: loadUserFromLS(),
   isLoading: false,
 };
 

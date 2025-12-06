@@ -24,6 +24,8 @@ import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
+  // console.log({ user }, user);
+
   const { enqueueSnackbar } = useSnackbar();
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>(
     'login'
@@ -55,7 +57,7 @@ const Auth = () => {
       }
 
       enqueueSnackbar('Welcome!', { variant: 'success' });
-      navigate('/todos');
+      navigate('/');
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
       enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });

@@ -33,10 +33,12 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
   const navigate = useNavigate();
 
   const isAboutPage = location.pathname === '/about';
+  const isHomePage = location.pathname === '/';
 
   function logOut() {
     dispatch(removeUser());
-    localStorage.clear();
+    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
     navigate('/auth');
   }
 
@@ -52,11 +54,13 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
             <Button color="inherit">To Do's{' - ' + undoneTodos}</Button>
           )}
 
-          {isAboutPage ? (
+          {!isHomePage && (
             <Button color="inherit" onClick={() => navigate('/')}>
               Home
             </Button>
-          ) : (
+          )}
+
+          {!isAboutPage && (
             <Button color="inherit" onClick={() => navigate('/about')}>
               About
             </Button>
