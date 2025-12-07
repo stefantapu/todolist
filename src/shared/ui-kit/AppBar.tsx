@@ -35,6 +35,10 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
   const isAboutPage = location.pathname === '/about';
   const isHomePage = location.pathname === '/';
 
+  const handleRedirectToProfile = () => {
+    navigate('/profile');
+  };
+
   function logOut() {
     dispatch(removeUser());
     localStorage.removeItem('user');
@@ -73,7 +77,12 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
           {username ? (
             <>
               <Tooltip title={username}>
-                <Avatar src="" alt={username}>
+                <Avatar
+                  src=""
+                  alt={username}
+                  onClick={handleRedirectToProfile}
+                  sx={{ cursor: 'pointer' }}
+                >
                   {username[0]}
                 </Avatar>
               </Tooltip>
