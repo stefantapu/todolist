@@ -17,11 +17,12 @@ import { useSnackbar } from 'notistack';
 import type { AxiosError } from 'axios';
 import {
   selectIsLoading,
+  selectUser,
   setIsLoading,
   setUser,
 } from '../model/store/userStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -30,9 +31,12 @@ const Auth = () => {
   );
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(false);
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
   const navigate = useNavigate();
+
+  const user = useAppSelector(selectUser);
 
   const handleSubmit = async () => {
     dispatch(setIsLoading(true));
@@ -63,6 +67,14 @@ const Auth = () => {
       dispatch(setIsLoading(false));
     }
   };
+
+  if (user) {
+    return <Navigate to="/"></Navigate>;
+  }
+
+  if (error) {
+    throw new Error('Error');
+  }
 
   return (
     <Container
@@ -150,6 +162,13 @@ const Auth = () => {
             }}
           >
             {loginFormName === 'login' ? 'Login' : 'Register'}
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => setError(true)}
+          >
+            Throw Error
           </Button>
         </Stack>
       </Paper>
