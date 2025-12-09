@@ -1,5 +1,4 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { mockTodos } from '../mockTodos';
 import type { TodoType } from '../todoType';
 
 type TodosStore = {
@@ -8,7 +7,7 @@ type TodosStore = {
 };
 
 const initialState: TodosStore = {
-  todos: mockTodos,
+  todos: [],
   isLoading: false,
 };
 

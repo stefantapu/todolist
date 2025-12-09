@@ -1,13 +1,29 @@
 import Box from '@mui/material/Box';
-import { Button, Grid, Input, Paper, Stack } from '@mui/material';
-import React, { useState } from 'react';
+import {
+  Button,
+  CircularProgress,
+  Grid,
+  Input,
+  Paper,
+  Stack,
+} from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import type { TodoType } from '../model/todoType';
-import { selectTodos, addTodo, updateTodo } from '../model/store/todosStore';
+import {
+  selectTodos,
+  addTodo,
+  updateTodo,
+  setTodos,
+} from '../model/store/todosStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
+import { getTodos } from '../api/todoApi';
+import { useSnackbar } from 'notistack';
 
-//  Корневой компонент списка задач
 const Todos = () => {
+  const { enqueueSnackbar } = useSnackbar();
+  const [isLoading, setIsLoading] = useState(true);
+
   const dispatch = useAppDispatch();
   const todos = useAppSelector(selectTodos);
 
@@ -40,6 +56,35 @@ const Todos = () => {
     setNewTodoTitle('');
     setNewTodoDescription('');
   };
+
+  useEffect(() => {
+    getTodos()
+      .then(response => {
+        dispatch(setTodos(response.data || []));
+      })
+      .catch(() => {
+        enqueueSnackbar('Error fetching todos', { variant: 'error' });
+        dispatch(setTodos([]));
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [dispatch, enqueueSnackbar]);
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ flexGrow: 1 }}>
