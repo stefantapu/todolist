@@ -21,6 +21,7 @@ import {
   setUser,
 } from '../model/store/userStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
+import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -29,8 +30,10 @@ const Auth = () => {
   );
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(false);
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
+  const navigate = useNavigate();
 
   const handleSubmit = async () => {
     dispatch(setIsLoading(true));
@@ -41,9 +44,23 @@ const Auth = () => {
         password,
       });
 
+      // Persist user in redux
       dispatch(setUser(loginData.data));
+      // Also persist token (and user) in localStorage so the session can survive reloads
+      try {
+        localStorage.setItem('access_token', loginData.data.access_token);
+        localStorage.setItem('user', JSON.stringify(loginData.data));
+      } catch (e) {
+        // Quieten any localStorage errors (e.g., storage disabled)
+        console.error('Failed to persist user to localStorage', e);
+      }
 
       enqueueSnackbar('Welcome!', { variant: 'success' });
+
+      const params = new URLSearchParams(window.location.search);
+      const back = params.get('back');
+      console.log(back);
+      navigate(back || '/');
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
       enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
@@ -51,6 +68,10 @@ const Auth = () => {
       dispatch(setIsLoading(false));
     }
   };
+
+  if (error) {
+    throw new Error('Error');
+  }
 
   return (
     <Container
@@ -138,6 +159,13 @@ const Auth = () => {
             }}
           >
             {loginFormName === 'login' ? 'Login' : 'Register'}
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => setError(true)}
+          >
+            Throw Error
           </Button>
         </Stack>
       </Paper>

@@ -9,12 +9,13 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import { useTodosStore } from '../../entities/Todo/model/store/useTodosStore';
 import { useAppDispatch, useAppSelector } from '../../app/store';
 import {
   selectUser,
   removeUser,
 } from '../../entities/User/model/store/userStore';
+import { selectUnDoneTodosLenght } from '../../entities/Todo/model/store/selectors/selectUnDoneTodos';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface Props {
   toggleTheme: () => void;
@@ -22,14 +23,27 @@ interface Props {
 }
 
 const AppBar = ({ toggleTheme, mode }: Props) => {
-  const todos = useTodosStore(state => state.todos);
-  const undoneTodos = todos.filter(todo => !todo.completed);
   const dispatch = useAppDispatch();
+
+  const undoneTodos = useAppSelector(selectUnDoneTodosLenght);
   const user = useAppSelector(selectUser);
   const username = user?.username;
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isAboutPage = location.pathname === '/about';
+  const isHomePage = location.pathname === '/';
+
+  const handleRedirectToProfile = () => {
+    navigate('/profile');
+  };
+
   function logOut() {
     dispatch(removeUser());
+    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
+    navigate('/auth');
   }
 
   return (
@@ -41,10 +55,20 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
 
         <div style={{ display: 'flex', gap: '10px' }}>
           {username && (
-            <Button color="inherit">To Do's{' - ' + undoneTodos.length}</Button>
+            <Button color="inherit">To Do's{' - ' + undoneTodos}</Button>
           )}
 
-          <Button color="inherit">About</Button>
+          {!isHomePage && (
+            <Button color="inherit" onClick={() => navigate('/')}>
+              Home
+            </Button>
+          )}
+
+          {!isAboutPage && (
+            <Button color="inherit" onClick={() => navigate('/about')}>
+              About
+            </Button>
+          )}
 
           <IconButton color="inherit" onClick={toggleTheme}>
             {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
@@ -53,7 +77,12 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
           {username ? (
             <>
               <Tooltip title={username}>
-                <Avatar src="" alt={username}>
+                <Avatar
+                  src=""
+                  alt={username}
+                  onClick={handleRedirectToProfile}
+                  sx={{ cursor: 'pointer' }}
+                >
                   {username[0]}
                 </Avatar>
               </Tooltip>
@@ -62,7 +91,9 @@ const AppBar = ({ toggleTheme, mode }: Props) => {
               </Button>
             </>
           ) : (
-            <Button color="inherit">Login</Button>
+            <Button color="inherit" onClick={() => navigate('/')}>
+              Login
+            </Button>
           )}
         </div>
       </Toolbar>

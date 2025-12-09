@@ -4,37 +4,19 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import './App.css';
 
-import AppBar from '../shared/ui-kit/AppBar.tsx';
-import Auth from '../entities/User/ui/Auth.tsx';
-import { ThemeProviderCustom, useThemeMode } from './ThemeProviderCustom.tsx';
-import Todos from '../entities/Todo/ui/Todos.tsx';
+import { ThemeProviderCustom } from './ThemeProviderCustom.tsx';
 import { SnackbarProvider } from 'notistack';
-import { UserProvider } from '../entities/User/model/provider/UserProvider.tsx';
-import { store, useAppSelector } from './store.ts';
+import { store } from './store.ts';
 import { Provider } from 'react-redux';
-import { selectUser } from '../entities/User/model/store/userStore.ts';
-
-const AppContent = () => {
-  const { mode, toggleTheme } = useThemeMode();
-  const user = useAppSelector(selectUser);
-
-  return (
-    <>
-      <AppBar toggleTheme={toggleTheme} mode={mode} />
-      {user ? <Todos /> : <Auth />}
-    </>
-  );
-};
+import AppRoutes from './appRoutes.tsx';
 
 const App = () => (
   <Provider store={store}>
-    <UserProvider>
-      <SnackbarProvider>
-        <ThemeProviderCustom>
-          <AppContent />
-        </ThemeProviderCustom>
-      </SnackbarProvider>
-    </UserProvider>
+    <SnackbarProvider>
+      <ThemeProviderCustom>
+        <AppRoutes />
+      </ThemeProviderCustom>
+    </SnackbarProvider>
   </Provider>
 );
 

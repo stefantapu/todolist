@@ -1,31 +1,22 @@
 import Box from '@mui/material/Box';
 import { Button, Grid, Input, Paper, Stack } from '@mui/material';
-import { useTodosStore } from '../model/store/useTodosStore';
-import { Todo } from './Todo';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { TodoType } from '../model/todoType';
+import { selectTodos, addTodo, updateTodo } from '../model/store/todosStore';
+import { useAppDispatch, useAppSelector } from '../../../app/store';
+import { Todo } from './Todo';
 
 //  Корневой компонент списка задач
 const Todos = () => {
-  //   const [todos, setTodos] = useState<TodoType[]>(mockTodos);
+  const dispatch = useAppDispatch();
+  const todos = useAppSelector(selectTodos);
+
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
 
-  //Zustand STORE
-  const todos = useTodosStore(state => state.todos);
-  const addTodos = useTodosStore(state => state.addTodo);
-  const setTodos = useTodosStore(state => state.setTodos);
-
-  // Функция для обновления одной задачи в массиве:
-  // проходит по всем задачам и заменяет ту, у которой совпадает _id
+  // Update a single todo in Redux
   const setTodo = (todo: TodoType) => {
-    const updatedTodos = todos.map((t: TodoType) => {
-      if (t._id === todo._id) {
-        return todo; // возвращаем обновлённую задачу
-      }
-      return t; // остальные оставляем без изменений
-    });
-    setTodos(updatedTodos); // обновляем стейт
+    dispatch(updateTodo(todo));
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,12 +34,13 @@ const Todos = () => {
       completed: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      order: todos.length + 1,
+      order: (todos?.length ?? 0) + 1,
     };
-    addTodos(newTodo);
+    dispatch(addTodo(newTodo));
     setNewTodoTitle('');
     setNewTodoDescription('');
   };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Paper elevation={24} sx={{ padding: 4, margin: 2, marginTop: 4 }}>
