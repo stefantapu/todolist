@@ -17,12 +17,11 @@ import { useSnackbar } from 'notistack';
 import type { AxiosError } from 'axios';
 import {
   selectIsLoading,
-  selectUser,
   setIsLoading,
   setUser,
 } from '../model/store/userStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -35,8 +34,6 @@ const Auth = () => {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
   const navigate = useNavigate();
-
-  const user = useAppSelector(selectUser);
 
   const handleSubmit = async () => {
     dispatch(setIsLoading(true));
@@ -59,7 +56,11 @@ const Auth = () => {
       }
 
       enqueueSnackbar('Welcome!', { variant: 'success' });
-      navigate('/');
+
+      const params = new URLSearchParams(window.location.search);
+      const back = params.get('back');
+      console.log(back);
+      navigate(back || '/');
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
       enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
@@ -67,10 +68,6 @@ const Auth = () => {
       dispatch(setIsLoading(false));
     }
   };
-
-  if (user) {
-    return <Navigate to="/"></Navigate>;
-  }
 
   if (error) {
     throw new Error('Error');

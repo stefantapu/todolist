@@ -9,7 +9,7 @@ const Profile = () => {
   const tokenUntilSec = jwtDecode(user.access_token).exp!;
   const tokenUntil = new Date(tokenUntilSec * 1000).toLocaleDateString();
   return (
-    <Card>
+    <Card elevation={4} sx={{ padding: 1, margin: 1 }}>
       <Avatar>{user.username.slice(0, 1).toUpperCase()}</Avatar>
       <Typography>{user.username}</Typography>
       <Typography variant="caption">{tokenUntil}</Typography>

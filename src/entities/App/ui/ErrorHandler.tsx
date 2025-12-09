@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material';
+import { Button, Typography } from '@mui/material';
 import { Component, type PropsWithChildren, type ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 
@@ -21,6 +21,12 @@ class ErrorHandler extends Component<PropsWithChildren, { hasError: boolean }> {
       return (
         <>
           <Typography variant="h1">Something went Wrong</Typography>
+          <Button
+            variant="contained"
+            onClick={() => this.setState({ hasError: false })}
+          >
+            Reset Error
+          </Button>
           <NavLink to={'/'}>Main Page</NavLink>
         </>
       );
