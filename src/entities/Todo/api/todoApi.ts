@@ -1,5 +1,5 @@
 import { rootApi } from '../../../shared/api/rootApi';
-import type { TodoType } from '../model/todoType';
+import type { CreateTodoType, TodoType } from '../model/todoType';
 
 export const getTodos = async (token?: string) => {
   return await rootApi.get<TodoType[]>('/todos', {
@@ -9,7 +9,10 @@ export const getTodos = async (token?: string) => {
   });
 };
 
-export const addTodo = async (todo: TodoType, token?: string) => {
+export const addTodoFromServer = async (
+  todo: CreateTodoType,
+  token?: string
+) => {
   return await rootApi.post<TodoType>('/todos', todo, {
     headers: {
       Authorization: 'Bearer ' + token,
