@@ -19,6 +19,7 @@ import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
 import { getTodos } from '../api/todoApi';
 import { useSnackbar } from 'notistack';
+import { selectUser } from '../../User/model/store/userStore';
 
 const Todos = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -26,7 +27,7 @@ const Todos = () => {
 
   const dispatch = useAppDispatch();
   const todos = useAppSelector(selectTodos);
-
+  const user = useAppSelector(selectUser);
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
 
@@ -58,7 +59,9 @@ const Todos = () => {
   };
 
   useEffect(() => {
-    getTodos()
+    if (!user?.access_token) return;
+
+    getTodos(user?.access_token)
       .then(response => {
         dispatch(setTodos(response.data || []));
       })
@@ -69,7 +72,7 @@ const Todos = () => {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [dispatch, enqueueSnackbar]);
+  }, [dispatch, enqueueSnackbar, user?.access_token]);
 
   if (isLoading) {
     return (
