@@ -5,6 +5,6 @@ export const getTodos = async () => {
   return await rootApi.get<TodoType[]>('/todos');
 };
 
-export const addTodoFromServer = async (todo: CreateTodoType) => {
+export const createTodo = async (todo: CreateTodoType) => {
   return await rootApi.post<TodoType>('/todos', todo);
 };

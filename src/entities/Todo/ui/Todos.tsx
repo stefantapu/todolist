@@ -5,7 +5,7 @@ import type { CreateTodoType, TodoType } from '../model/todoType';
 import { selectTodos, updateTodo, setTodos } from '../model/store/todosStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
-import { addTodoFromServer, getTodos } from '../api/todoApi';
+import { createTodo, getTodos } from '../api/todoApi';
 import { useSnackbar } from 'notistack';
 import { selectUser } from '../../User/model/store/userStore';
 
@@ -57,7 +57,7 @@ const Todos = () => {
         title: newTodoTitle,
         description: newTodoDescription,
       };
-      await addTodoFromServer(newTodo);
+      await createTodo(newTodo);
       handleClearFields();
       await handleGetTodosFromServer();
     } catch (error) {
