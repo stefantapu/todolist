@@ -1,24 +1,13 @@
 import Box from '@mui/material/Box';
-import {
-  Button,
-  CircularProgress,
-  Grid,
-  Input,
-  Paper,
-  Stack,
-} from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import type { TodoType } from '../model/todoType';
-import {
-  selectTodos,
-  addTodo,
-  updateTodo,
-  setTodos,
-} from '../model/store/todosStore';
+import { Button, CircularProgress, Grid, Input, Paper, Stack } from '@mui/material';
+import React, { useCallback, useEffect, useState } from 'react';
+import type { CreateTodoType, TodoType } from '../model/todoType';
+import { selectTodos, updateTodo, setTodos } from '../model/store/todosStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
-import { getTodos } from '../api/todoApi';
+import { addTodoFromServer, getTodos } from '../api/todoApi';
 import { useSnackbar } from 'notistack';
+import { selectUser } from '../../User/model/store/userStore';
 
 const Todos = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -26,38 +15,15 @@ const Todos = () => {
 
   const dispatch = useAppDispatch();
   const todos = useAppSelector(selectTodos);
-
+  const user = useAppSelector(selectUser);
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
 
-  // Update a single todo in Redux
   const setTodo = (todo: TodoType) => {
     dispatch(updateTodo(todo));
   };
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewTodoTitle(e.target.value);
-  };
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewTodoDescription(e.target.value);
-  };
-
-  const handldeAddTodo = () => {
-    const newTodo: TodoType = {
-      _id: Date.now().toString(),
-      title: newTodoTitle,
-      description: newTodoDescription,
-      completed: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      order: (todos?.length ?? 0) + 1,
-    };
-    dispatch(addTodo(newTodo));
-    setNewTodoTitle('');
-    setNewTodoDescription('');
-  };
-
-  useEffect(() => {
+  const handleGetTodosFromServer = useCallback(async () => {
     getTodos()
       .then(response => {
         dispatch(setTodos(response.data || []));
@@ -70,6 +36,42 @@ const Todos = () => {
         setIsLoading(false);
       });
   }, [dispatch, enqueueSnackbar]);
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewTodoTitle(e.target.value);
+  };
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewTodoDescription(e.target.value);
+  };
+
+  const handleClearFields = () => {
+    setNewTodoTitle('');
+    setNewTodoDescription('');
+  };
+
+  const handldeAddTodo = async () => {
+    try {
+      if (!user?.access_token) return;
+
+      const newTodo: CreateTodoType = {
+        title: newTodoTitle,
+        description: newTodoDescription,
+      };
+      await addTodoFromServer(newTodo);
+      handleClearFields();
+      await handleGetTodosFromServer();
+    } catch (error) {
+      console.log(error);
+      enqueueSnackbar('Error adding todo', { variant: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!user?.access_token) return;
+    handleGetTodosFromServer();
+  }, [handleGetTodosFromServer, user?.access_token]);
 
   if (isLoading) {
     return (

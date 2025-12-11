@@ -7,3 +7,5 @@ export type TodoType = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type CreateTodoType = Pick<TodoType, 'title' | 'description'>;

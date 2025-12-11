@@ -18,7 +18,7 @@ export const todosStore = createSlice({
     setTodos: (state, action: PayloadAction<TodoType[]>) => {
       state.todos = [...action.payload].sort((a, b) => a.order - b.order);
     },
-    addTodo: (state, action: PayloadAction<TodoType>) => {
+    addTodoToStore: (state, action: PayloadAction<TodoType>) => {
       state.todos.push(action.payload);
     },
     removeTodo: (state, action: PayloadAction<string>) => {
@@ -48,8 +48,13 @@ export const todosStore = createSlice({
   },
 });
 
-export const { setTodos, addTodo, removeTodo, updateTodo, setIsLoading } =
-  todosStore.actions;
+export const {
+  setTodos,
+  addTodoToStore,
+  removeTodo,
+  updateTodo,
+  setIsLoading,
+} = todosStore.actions;
 
 export const selectTodos = (state: { todos: TodosStore }) => state.todos.todos;
 export const selectTodosLoading = (state: { todos: TodosStore }) =>
