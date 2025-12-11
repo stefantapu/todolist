@@ -2,12 +2,7 @@ import Box from '@mui/material/Box';
 import { Button, CircularProgress, Grid, Input, Paper, Stack } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import type { CreateTodoType, TodoType } from '../model/todoType';
-import {
-  selectTodos,
-  updateTodo,
-  setTodos,
-  addTodoToStore,
-} from '../model/store/todosStore';
+import { selectTodos, updateTodo, setTodos } from '../model/store/todosStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
 import { addTodoFromServer, getTodos } from '../api/todoApi';
@@ -29,7 +24,7 @@ const Todos = () => {
   };
 
   const handleGetTodosFromServer = useCallback(async () => {
-    getTodos(user?.access_token)
+    getTodos()
       .then(response => {
         dispatch(setTodos(response.data || []));
       })
@@ -40,7 +35,7 @@ const Todos = () => {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [dispatch, enqueueSnackbar, user?.access_token]);
+  }, [dispatch, enqueueSnackbar]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewTodoTitle(e.target.value);
@@ -62,7 +57,7 @@ const Todos = () => {
         title: newTodoTitle,
         description: newTodoDescription,
       };
-      await addTodoFromServer(newTodo, user?.access_token);
+      await addTodoFromServer(newTodo);
       handleClearFields();
       await handleGetTodosFromServer();
     } catch (error) {
