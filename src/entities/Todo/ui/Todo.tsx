@@ -10,6 +10,7 @@ import { useSnackbar } from 'notistack';
 import { deleteTodo, getTodos } from '../api/todoApi';
 import { useAppDispatch } from '../../../app/store';
 import { setTodos } from '../model/store/todosStore';
+import EditButton from './EditButton';
 
 type TodoProps = {
   todo: TodoType;
@@ -49,6 +50,10 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
 
   const handleCheckClick = () => {
     setTodo?.({ ...todo, completed: !todo.completed });
+  };
+
+  const handleEdit = () => {
+    setEditingField('title');
   };
 
   return (
@@ -142,10 +147,13 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                 >
                   {todo.title}
                 </Typography>
-                <Checkbox
-                  checked={todo.completed}
-                  onClick={handleCheckClick} // переключаем completed при клике
-                />
+                <div>
+                  <EditButton onClick={() => handleEdit()} />
+                  <Checkbox
+                    checked={todo.completed}
+                    onClick={handleCheckClick} // переключаем completed при клике
+                  />
+                </div>
               </Stack>
             )}
           </Stack>

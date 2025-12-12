@@ -9,6 +9,10 @@ export const createTodo = async (todo: CreateTodoType) => {
   return await rootApi.post<TodoType>('/todos', todo);
 };
 
-export const deleteTodo = async (token: string) => {
-  return await rootApi.delete('/todos/' + token);
+export const deleteTodo = async (id: string) => {
+  return await rootApi.delete('/todos/' + id);
+};
+
+export const editTodoTitleAndDescription = async (todo: CreateTodoType) => {
+  return await rootApi.patch('/todos/' + todo);
 };
