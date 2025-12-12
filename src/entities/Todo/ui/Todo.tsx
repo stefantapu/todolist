@@ -7,8 +7,9 @@ import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import { Grid, Paper, Stack, TextField } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { removeTodo } from '../model/store/todosStore';
-import { useDispatch } from 'react-redux';
+import { deleteTodo, getTodos } from '../api/todoApi';
+import { useAppDispatch } from '../../../app/store';
+import { setTodos } from '../model/store/todosStore';
 
 type TodoProps = {
   todo: TodoType;
@@ -16,18 +17,24 @@ type TodoProps = {
 };
 
 export const Todo = ({ todo, setTodo }: TodoProps) => {
-  const dispatch = useDispatch();
-  const deleteTodo = (id: string) => {
-    dispatch(removeTodo(id));
-  };
-
+  const dispatch = useAppDispatch();
   const { enqueueSnackbar } = useSnackbar();
-  const [editingField, setEditingField] = useState<
-    'title' | 'description' | null
-  >(null);
+  const [editingField, setEditingField] = useState<'title' | 'description' | null>(null);
   const [editedTitle, setEditedTitle] = useState(todo.title);
   const [editedDescription, setEditedDescription] = useState(todo.description);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDeleteTodo = async (id: string) => {
+    try {
+      await deleteTodo(id);
+      const response = await getTodos();
+      dispatch(setTodos(response.data || []));
+      enqueueSnackbar('Todo deleted', { variant: 'success' });
+    } catch (error) {
+      console.error('Failed to delete todo:', error);
+      enqueueSnackbar('Failed to delete todo', { variant: 'error' });
+    }
+  };
 
   const saveChanges = () => {
     setTodo?.({
@@ -223,10 +230,7 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
               <br />
               Modified: {new Date(todo.updatedAt).toLocaleDateString()}
             </Typography>
-            <IconButton
-              aria-label="delete"
-              onClick={() => deleteTodo(todo._id)}
-            >
+            <IconButton aria-label="delete" onClick={() => handleDeleteTodo(todo._id)}>
               <DeleteIcon></DeleteIcon>
             </IconButton>
           </Grid>
