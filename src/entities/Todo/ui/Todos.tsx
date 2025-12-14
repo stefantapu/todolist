@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import { Button, CircularProgress, Grid, Input, Paper, Stack } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import type { CreateTodoType, TodoType } from '../model/todoType';
 import { selectTodos, updateTodo, setTodos } from '../model/store/todosStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
@@ -18,10 +18,21 @@ const Todos = () => {
   const user = useAppSelector(selectUser);
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const setTodo = (todo: TodoType) => {
     dispatch(updateTodo(todo));
   };
+
+  const filteredTodos = useMemo(() => {
+    const q = searchQuery.trim();
+    if (!q) return todos;
+    const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+    return todos.filter(todo => {
+      const title = (todo.title || '').toLowerCase();
+      return terms.every(term => title.includes(term));
+    });
+  }, [todos, searchQuery]);
 
   const handleGetTodosFromServer = useCallback(async () => {
     getTodos()
@@ -55,7 +66,7 @@ const Todos = () => {
 
       const newTodo: CreateTodoType = {
         title: newTodoTitle,
-        description: newTodoDescription,
+        description: newTodoDescription.trim() ? newTodoDescription : ' ',
       };
       await createTodo(newTodo);
       handleClearFields();
@@ -133,6 +144,31 @@ const Todos = () => {
         </Stack>
       </Paper>
 
+      {/*Search by title sorting list */}
+      <Paper elevation={24} sx={{ padding: 4, margin: 2, marginTop: 4 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{
+            width: '100%',
+            alignItems: 'center',
+          }}
+        >
+          <Input
+            sx={{
+              width: '100%',
+            }}
+            placeholder="Search title (multi-term), e.g. 'buy milk'"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            inputProps={{ 'aria-label': 'search todos by title' }}
+          />
+          <Button variant="outlined" onClick={() => setSearchQuery('')} disabled={!searchQuery}>
+            Clear
+          </Button>
+        </Stack>
+      </Paper>
+
       <Grid
         container
         direction="row"
@@ -145,7 +181,7 @@ const Todos = () => {
         }}
       >
         {/* Рендерим каждую задачу через компонент Todo */}
-        {todos.map(todo => {
+        {filteredTodos.map(todo => {
           return <Todo todo={todo} key={todo._id} setTodo={setTodo} />;
         })}
       </Grid>

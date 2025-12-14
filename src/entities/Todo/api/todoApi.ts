@@ -13,6 +13,11 @@ export const deleteTodo = async (id: string) => {
   return await rootApi.delete('/todos/' + id);
 };
 
-export const editTodoTitleAndDescription = async (todo: CreateTodoType) => {
-  return await rootApi.patch('/todos/' + todo);
+export const editTodoTitleAndDescription = async (todo: CreateTodoType, id: string) => {
+  return await rootApi.patch<TodoType>(`/todos/${id}`, todo);
+};
+
+export const editTodoCompleted = async (completed: boolean, id: string) => {
+  // send an object body to match typical PATCH expectations
+  return await rootApi.patch<TodoType>(`/todos/${id}`, { completed });
 };

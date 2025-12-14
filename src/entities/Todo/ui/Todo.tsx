@@ -2,15 +2,19 @@ import { useState, useRef } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import type { TodoType } from '../model/todoType';
+import type { CreateTodoType, TodoType } from '../model/todoType';
 import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import { Grid, Paper, Stack, TextField } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { deleteTodo, getTodos } from '../api/todoApi';
+import {
+  deleteTodo,
+  editTodoCompleted,
+  editTodoTitleAndDescription,
+  getTodos,
+} from '../api/todoApi';
 import { useAppDispatch } from '../../../app/store';
 import { setTodos } from '../model/store/todosStore';
-import EditButton from './EditButton';
 
 type TodoProps = {
   todo: TodoType;
@@ -25,35 +29,63 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
   const [editedDescription, setEditedDescription] = useState(todo.description);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const handleEditTodo = async () => {
+    // If nothing changed
+    if (editedTitle === todo.title && editedDescription === todo.description) {
+      setEditingField(null);
+      enqueueSnackbar('No changes', { variant: 'info' });
+      return;
+    }
+
+    try {
+      const newTodo: CreateTodoType = {
+        title: editedTitle,
+        description: editedDescription,
+      };
+      await editTodoTitleAndDescription(newTodo, todo._id);
+
+      const response = await getTodos();
+      dispatch(setTodos(response.data || []));
+      setEditingField(null);
+      enqueueSnackbar('Saved!', { variant: 'success' });
+    } catch (error) {
+      console.error('Failed to edit todo:', error);
+      enqueueSnackbar('Failed to save todo', { variant: 'error' });
+    }
+  };
+
   const handleDeleteTodo = async (id: string) => {
     try {
       await deleteTodo(id);
       const response = await getTodos();
       dispatch(setTodos(response.data || []));
-      enqueueSnackbar('Todo deleted', { variant: 'success' });
+      enqueueSnackbar('Task deleted!', { variant: 'success' });
     } catch (error) {
       console.error('Failed to delete todo:', error);
       enqueueSnackbar('Failed to delete todo', { variant: 'error' });
     }
   };
 
-  const saveChanges = () => {
-    setTodo?.({
-      ...todo,
-      title: editedTitle,
-      description: editedDescription,
-      updatedAt: new Date().toISOString(),
-    });
-    setEditingField(null);
-    enqueueSnackbar('Saved!', { variant: 'success' });
+  const handleCompleted = async (completed: boolean) => {
+    try {
+      await editTodoCompleted(completed, todo._id);
+      const response = await getTodos();
+      dispatch(setTodos(response.data || []));
+      if (completed) {
+        enqueueSnackbar('Nice!', { variant: 'success' });
+      } else {
+        enqueueSnackbar('Updated!', { variant: 'default' });
+      }
+    } catch (error) {
+      console.error('Failed to update completed state:', error);
+      enqueueSnackbar('Failed to update todo', { variant: 'error' });
+    }
   };
 
-  const handleCheckClick = () => {
-    setTodo?.({ ...todo, completed: !todo.completed });
-  };
-
-  const handleEdit = () => {
-    setEditingField('title');
+  const handleToggleCompleted = () => {
+    const newCompleted = !todo.completed;
+    setTodo?.({ ...todo, completed: newCompleted });
+    handleCompleted(newCompleted);
   };
 
   return (
@@ -83,7 +115,7 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                 value={editedTitle}
                 variant="standard"
                 onChange={e => setEditedTitle(e.target.value)}
-                onBlur={saveChanges}
+                onBlur={() => handleEditTodo()}
                 onFocus={() => {
                   // Set cursor position to the end when focused
                   if (inputRef.current) {
@@ -94,7 +126,7 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   }
                 }}
                 onKeyDown={e => {
-                  if (e.key === 'Enter') saveChanges();
+                  if (e.key === 'Enter') handleEditTodo();
                 }}
                 slotProps={{
                   root: { sx: { width: '100%' } },
@@ -138,7 +170,7 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                     fontWeight: 500,
                     cursor: 'pointer',
                     fontSize: 26,
-                    width: 'auto',
+                    width: '100%',
                   }}
                   onDoubleClick={() => {
                     setEditedTitle(todo.title);
@@ -148,10 +180,9 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   {todo.title}
                 </Typography>
                 <div>
-                  <EditButton onClick={() => handleEdit()} />
                   <Checkbox
                     checked={todo.completed}
-                    onClick={handleCheckClick} // переключаем completed при клике
+                    onClick={handleToggleCompleted} // переключаем completed при клике
                   />
                 </div>
               </Stack>
@@ -167,9 +198,9 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                 value={editedDescription}
                 variant="standard"
                 onChange={e => setEditedDescription(e.target.value)}
-                onBlur={saveChanges}
+                onBlur={() => handleEditTodo()}
                 onKeyDown={e => {
-                  if (e.key === 'Enter') saveChanges();
+                  if (e.key === 'Enter') handleEditTodo();
                 }}
                 slotProps={{
                   input: {
