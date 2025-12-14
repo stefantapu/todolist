@@ -6,6 +6,7 @@ import { selectTodos, updateTodo, setTodos } from '../model/store/todosStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
 import { createTodo, getTodos } from '../api/todoApi';
+import { mockTodos } from '../model/mockTodos';
 import { useSnackbar } from 'notistack';
 import { selectUser } from '../../User/model/store/userStore';
 
@@ -79,6 +80,31 @@ const Todos = () => {
     }
   };
 
+  const handleCreateTestTasks = async () => {
+    try {
+      if (!user?.access_token) return;
+      setIsLoading(true);
+      const createPromises = mockTodos.map(m => {
+        const payload: CreateTodoType = {
+          title: m.title,
+          description: m.description?.trim() ? m.description : ' ',
+        };
+        return createTodo(payload);
+      });
+      const results = await Promise.allSettled(createPromises);
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+      if (succeeded) enqueueSnackbar(`Created ${succeeded} test tasks`, { variant: 'success' });
+      if (failed) enqueueSnackbar(`${failed} tasks failed to create`, { variant: 'warning' });
+      await handleGetTodosFromServer();
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('Error creating test tasks', { variant: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!user?.access_token) return;
     handleGetTodosFromServer();
@@ -141,6 +167,16 @@ const Todos = () => {
           >
             Add task
           </Button>
+          <Button
+            variant="outlined"
+            disabled={!user?.access_token || isLoading}
+            onClick={handleCreateTestTasks}
+            sx={{
+              width: '50%',
+            }}
+          >
+            Create test tasks
+          </Button>
         </Stack>
       </Paper>
 
@@ -163,7 +199,11 @@ const Todos = () => {
             onChange={e => setSearchQuery(e.target.value)}
             inputProps={{ 'aria-label': 'search todos by title' }}
           />
-          <Button variant="outlined" onClick={() => setSearchQuery('')} disabled={!searchQuery}>
+          <Button
+            variant="outlined"
+            onClick={() => setSearchQuery('')}
+            disabled={!searchQuery}
+          >
             Clear
           </Button>
         </Stack>
