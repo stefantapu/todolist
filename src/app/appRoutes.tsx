@@ -7,6 +7,7 @@ import Todos from '../entities/Todo/ui/Todos.tsx';
 import Profile from '../entities/User/ui/Profile.tsx';
 import ErrorHandler from '../entities/App/ui/ErrorHandler.tsx';
 import Redirector from '../entities/App/ui/Redirector.tsx';
+import TodoPage from '../entities/Todo/ui/TodoPage.tsx';
 
 export default function AppRoutes() {
   return (
@@ -20,6 +21,8 @@ export default function AppRoutes() {
             </Route>
             <Route path="/auth" element={<Auth />} />
             <Route path="/about" element={<About />} />
+            <Route path="/todo" element={<TodoPage />} />
+            <Route path="/todo/:id" element={<TodoPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import { useNavigate } from 'react-router-dom';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import type { CreateTodoType, TodoType } from '../model/todoType';
 import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
@@ -19,15 +21,19 @@ import { setTodos } from '../model/store/todosStore';
 type TodoProps = {
   todo: TodoType;
   setTodo?: (todo: TodoType) => void;
+  variant?: 'card' | 'fullpage';
 };
 
-export const Todo = ({ todo, setTodo }: TodoProps) => {
+export const Todo = ({ todo, setTodo, variant = 'card' }: TodoProps) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [editingField, setEditingField] = useState<'title' | 'description' | null>(null);
   const [editedTitle, setEditedTitle] = useState(todo.title);
   const [editedDescription, setEditedDescription] = useState(todo.description);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const isFull = variant === 'fullpage';
 
   const handleEditTodo = async () => {
     // If nothing changed
@@ -42,10 +48,22 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
         title: editedTitle,
         description: editedDescription,
       };
-      await editTodoTitleAndDescription(newTodo, todo._id);
 
-      const response = await getTodos();
-      dispatch(setTodos(response.data || []));
+      // send patch and use returned todo to update local and global state
+      const res = await editTodoTitleAndDescription(newTodo, todo._id);
+      const updatedTodo: TodoType = res?.data ?? { ...todo, ...newTodo };
+
+      // update global list
+      const allRes = await getTodos();
+      dispatch(setTodos(allRes.data || []));
+
+      // update page-local todo if parent passed setter (optimistic / local sync)
+      setTodo?.(updatedTodo);
+
+      // also update local edit fields to match saved data
+      setEditedTitle(updatedTodo.title);
+      setEditedDescription(updatedTodo.description);
+
       setEditingField(null);
       enqueueSnackbar('Saved!', { variant: 'success' });
     } catch (error) {
@@ -92,12 +110,12 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
     <Box
       sx={{
         flexGrow: 1,
-        width: 'min(50%, 500px)',
-        height: '100%',
+        width: isFull ? '100%' : 'min(50%, 500px)',
+        height: isFull ? 'calc(100vh - 120px)' : '100%',
       }}
     >
-      <Paper elevation={16} sx={{ padding: 2, height: '100%' }}>
-        <Stack spacing={4} sx={{ height: '100%' }}>
+      <Paper elevation={isFull ? 0 : 16} sx={{ padding: isFull ? 4 : 2, height: '100%' }}>
+        <Stack spacing={isFull ? 6 : 4} sx={{ height: '100%' }}>
           <Stack
             direction="row"
             sx={{
@@ -111,13 +129,12 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
               <TextField
                 fullWidth
                 autoFocus
-                inputRef={inputRef} // Attach the ref to the TextField
+                inputRef={inputRef}
                 value={editedTitle}
                 variant="standard"
                 onChange={e => setEditedTitle(e.target.value)}
                 onBlur={() => handleEditTodo()}
                 onFocus={() => {
-                  // Set cursor position to the end when focused
                   if (inputRef.current) {
                     inputRef.current.setSelectionRange(
                       editedTitle.length,
@@ -142,10 +159,10 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   htmlInput: {
                     sx: {
                       fontWeight: 500,
-                      fontSize: 26,
+                      fontSize: isFull ? 36 : 26,
                       padding: 0,
                       margin: 0,
-                      lineHeight: 1.6,
+                      lineHeight: 1.2,
                       height: 'auto',
                     },
                   },
@@ -169,7 +186,7 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   sx={{
                     fontWeight: 500,
                     cursor: 'pointer',
-                    fontSize: 26,
+                    fontSize: isFull ? 36 : 26,
                     width: '100%',
                   }}
                   onDoubleClick={() => {
@@ -180,10 +197,20 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   {todo.title}
                 </Typography>
                 <div>
-                  <Checkbox
-                    checked={todo.completed}
-                    onClick={handleToggleCompleted} // переключаем completed при клике
-                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Checkbox checked={todo.completed} onClick={handleToggleCompleted} />
+                    {isFull ? (
+                      <div></div>
+                    ) : (
+                      <IconButton
+                        aria-label="open todo"
+                        size="small"
+                        onClick={() => navigate(`/todo/${todo._id}`)}
+                      >
+                        <OpenInNewIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
                 </div>
               </Stack>
             )}
@@ -239,7 +266,6 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   whiteSpace: 'pre-wrap', // matches multiline textfield behavior
                 }}
                 onDoubleClick={() => {
-                  console.log('Double clicked description');
                   setEditedDescription(todo.description);
                   setEditingField('description');
                 }}
@@ -262,15 +288,21 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
               sx={{
                 display: 'block',
                 color: 'text.secondary',
-                fontSize: 10,
+                fontSize: isFull ? 12 : 10,
               }}
             >
               Created: {new Date(todo.createdAt).toLocaleDateString()}
               <br />
               Modified: {new Date(todo.updatedAt).toLocaleDateString()}
             </Typography>
-            <IconButton aria-label="delete" onClick={() => handleDeleteTodo(todo._id)}>
-              <DeleteIcon></DeleteIcon>
+            <IconButton
+              aria-label="delete"
+              onClick={() => {
+                handleDeleteTodo(todo._id);
+                navigate(`/`);
+              }}
+            >
+              <DeleteIcon />
             </IconButton>
           </Grid>
         </Stack>
