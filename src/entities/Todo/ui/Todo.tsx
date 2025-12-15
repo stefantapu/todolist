@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, memo } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import { useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import type { CreateTodoType, TodoType } from '../model/todoType';
 import Checkbox from '@mui/material/Checkbox';
@@ -24,7 +24,7 @@ type TodoProps = {
   variant?: 'card' | 'fullpage';
 };
 
-export const Todo = ({ todo, setTodo, variant = 'card' }: TodoProps) => {
+export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -114,8 +114,8 @@ export const Todo = ({ todo, setTodo, variant = 'card' }: TodoProps) => {
         height: isFull ? 'calc(100vh - 120px)' : '100%',
       }}
     >
-      <Paper elevation={isFull ? 0 : 16} sx={{ padding: isFull ? 4 : 2, height: '100%' }}>
-        <Stack spacing={isFull ? 6 : 4} sx={{ height: '100%' }}>
+      <Paper elevation={16} sx={{ padding: isFull ? 4 : 2, height: '100%' }}>
+        <Stack spacing={isFull ? 8 : 4} sx={{ height: '100%' }}>
           <Stack
             direction="row"
             sx={{
@@ -202,13 +202,15 @@ export const Todo = ({ todo, setTodo, variant = 'card' }: TodoProps) => {
                     {isFull ? (
                       <div></div>
                     ) : (
-                      <IconButton
-                        aria-label="open todo"
-                        size="small"
-                        onClick={() => navigate(`/todo/${todo._id}`)}
-                      >
-                        <OpenInNewIcon fontSize="small" />
-                      </IconButton>
+                      <NavLink to={`/todo/${todo._id}`}>
+                        <IconButton
+                          aria-label="open todo"
+                          size="small"
+                          // onClick={() => navigate(`/todo/${todo._id}`)} //No link when hovering
+                        >
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
+                      </NavLink>
                     )}
                   </Box>
                 </div>
@@ -309,4 +311,4 @@ export const Todo = ({ todo, setTodo, variant = 'card' }: TodoProps) => {
       </Paper>
     </Box>
   );
-};
+});

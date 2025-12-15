@@ -21,9 +21,12 @@ const Todos = () => {
   const [newTodoDescription, setNewTodoDescription] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const setTodo = (todo: TodoType) => {
-    dispatch(updateTodo(todo));
-  };
+  const setTodo = useCallback(
+    (todo: TodoType) => {
+      dispatch(updateTodo(todo));
+    },
+    [dispatch]
+  );
 
   const filteredTodos = useMemo(() => {
     const q = searchQuery.trim();
@@ -94,8 +97,10 @@ const Todos = () => {
       const results = await Promise.allSettled(createPromises);
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
       const failed = results.filter(r => r.status === 'rejected').length;
-      if (succeeded) enqueueSnackbar(`Created ${succeeded} test tasks`, { variant: 'success' });
-      if (failed) enqueueSnackbar(`${failed} tasks failed to create`, { variant: 'warning' });
+      if (succeeded)
+        enqueueSnackbar(`Created ${succeeded} test tasks`, { variant: 'success' });
+      if (failed)
+        enqueueSnackbar(`${failed} tasks failed to create`, { variant: 'warning' });
       await handleGetTodosFromServer();
     } catch (error) {
       console.error(error);

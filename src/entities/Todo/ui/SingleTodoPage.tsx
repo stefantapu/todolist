@@ -5,7 +5,7 @@ import { Todo } from './Todo';
 import type { TodoType } from '../model/todoType';
 import { getTodos, getTodoById } from '../api/todoApi';
 
-export const TodoPage = () => {
+export const SingleTodoPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [todo, setTodo] = useState<TodoType | null>(null);
@@ -95,4 +95,4 @@ export const TodoPage = () => {
   );
 };
 
-export default TodoPage;
+export default SingleTodoPage;
