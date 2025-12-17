@@ -4,9 +4,12 @@ import { Container, Box, Button, CircularProgress, Typography } from '@mui/mater
 import { Todo } from './Todo';
 import type { TodoType } from '../model/todoType';
 import { getTodos, getTodoById } from '../api/todoApi';
+import { useAppSelector } from '../../../app/store';
+import { selectFilters } from '../model/store/todosStore';
 
 export const SingleTodoPage = () => {
   const { id } = useParams<{ id: string }>();
+  const filters = useAppSelector(selectFilters);
   const navigate = useNavigate();
   const [todo, setTodo] = useState<TodoType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +24,7 @@ export const SingleTodoPage = () => {
           const item: TodoType | null = response?.data ?? null;
           setTodo(item);
         } else {
-          const response = await getTodos();
+          const response = await getTodos(filters);
           const items: TodoType[] = response.data || [];
           const found = items.find(t => t._id === id) || null;
           setTodo(found);
@@ -35,7 +38,7 @@ export const SingleTodoPage = () => {
     };
 
     fetchTodo();
-  }, [id]);
+  }, [filters, id]);
 
   const goBack = () => navigate(-1);
 

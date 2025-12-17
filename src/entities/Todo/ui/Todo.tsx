@@ -15,8 +15,9 @@ import {
   editTodoTitleAndDescription,
   getTodos,
 } from '../api/todoApi';
-import { useAppDispatch } from '../../../app/store';
-import { setTodos } from '../model/store/todosStore';
+import { useAppDispatch, useAppSelector } from '../../../app/store';
+import { selectFilters, setTodos } from '../model/store/todosStore';
+import { formatDistanceToNow } from 'date-fns';
 
 type TodoProps = {
   todo: TodoType;
@@ -27,6 +28,7 @@ type TodoProps = {
 export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const filters = useAppSelector(selectFilters);
   const { enqueueSnackbar } = useSnackbar();
   const [editingField, setEditingField] = useState<'title' | 'description' | null>(null);
   const [editedTitle, setEditedTitle] = useState(todo.title);
@@ -54,7 +56,7 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
       const updatedTodo: TodoType = res?.data ?? { ...todo, ...newTodo };
 
       // update global list
-      const allRes = await getTodos();
+      const allRes = await getTodos(filters);
       dispatch(setTodos(allRes.data || []));
 
       // update page-local todo if parent passed setter (optimistic / local sync)
@@ -75,7 +77,7 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
   const handleDeleteTodo = async (id: string) => {
     try {
       await deleteTodo(id);
-      const response = await getTodos();
+      const response = await getTodos(filters);
       dispatch(setTodos(response.data || []));
       enqueueSnackbar('Task deleted!', { variant: 'success' });
     } catch (error) {
@@ -87,7 +89,7 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
   const handleCompleted = async (completed: boolean) => {
     try {
       await editTodoCompleted(completed, todo._id);
-      const response = await getTodos();
+      const response = await getTodos(filters);
       dispatch(setTodos(response.data || []));
       if (completed) {
         enqueueSnackbar('Nice!', { variant: 'success' });
@@ -111,7 +113,7 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
       sx={{
         flexGrow: 1,
         width: isFull ? '100%' : 'min(50%, 500px)',
-        height: isFull ? 'calc(100vh - 120px)' : '100%',
+        height: isFull ? 'auto' : '100%',
       }}
     >
       <Paper elevation={16} sx={{ padding: isFull ? 4 : 2, height: '100%' }}>
@@ -229,7 +231,7 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
                 onChange={e => setEditedDescription(e.target.value)}
                 onBlur={() => handleEditTodo()}
                 onKeyDown={e => {
-                  if (e.key === 'Enter') handleEditTodo();
+                  if (e.key === 'Enter' && e.ctrlKey) handleEditTodo();
                 }}
                 slotProps={{
                   input: {
@@ -290,12 +292,10 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
               sx={{
                 display: 'block',
                 color: 'text.secondary',
-                fontSize: isFull ? 12 : 10,
+                fontSize: isFull ? 18 : 14,
               }}
             >
-              Created: {new Date(todo.createdAt).toLocaleDateString()}
-              <br />
-              Modified: {new Date(todo.updatedAt).toLocaleDateString()}
+              {formatDistanceToNow(todo.updatedAt)}
             </Typography>
             <IconButton
               aria-label="delete"

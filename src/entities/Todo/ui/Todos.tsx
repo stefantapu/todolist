@@ -2,7 +2,12 @@ import Box from '@mui/material/Box';
 import { Button, CircularProgress, Grid, Input, Paper, Stack } from '@mui/material';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import type { CreateTodoType, TodoType } from '../model/todoType';
-import { selectTodos, updateTodo, setTodos } from '../model/store/todosStore';
+import {
+  selectTodos,
+  updateTodo,
+  setTodos,
+  selectFilters,
+} from '../model/store/todosStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
 import { createTodo, getTodos } from '../api/todoApi';
@@ -12,11 +17,13 @@ import { selectUser } from '../../User/model/store/userStore';
 
 const Todos = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const [isLoading, setIsLoading] = useState(true);
 
   const dispatch = useAppDispatch();
   const todos = useAppSelector(selectTodos);
   const user = useAppSelector(selectUser);
+  const filters = useAppSelector(selectFilters);
+
+  const [isLoading, setIsLoading] = useState(true);
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,7 +46,7 @@ const Todos = () => {
   }, [todos, searchQuery]);
 
   const handleGetTodosFromServer = useCallback(async () => {
-    getTodos()
+    getTodos(filters)
       .then(response => {
         dispatch(setTodos(response.data || []));
       })
@@ -50,7 +57,7 @@ const Todos = () => {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [dispatch, enqueueSnackbar]);
+  }, [dispatch, enqueueSnackbar, filters]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewTodoTitle(e.target.value);
@@ -113,6 +120,7 @@ const Todos = () => {
   useEffect(() => {
     if (!user?.access_token) return;
     handleGetTodosFromServer();
+    return;
   }, [handleGetTodosFromServer, user?.access_token]);
 
   if (isLoading) {
