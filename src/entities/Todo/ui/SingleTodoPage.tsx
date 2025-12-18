@@ -6,17 +6,18 @@ import type { TodoType } from '../model/todoType';
 import { getTodos, getTodoById } from '../api/todoApi';
 import { useAppSelector } from '../../../app/store';
 import { selectFilters } from '../model/store/todosStore';
+import { useDispatch } from 'react-redux';
 
 export const SingleTodoPage = () => {
   const { id } = useParams<{ id: string }>();
   const filters = useAppSelector(selectFilters);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [todo, setTodo] = useState<TodoType | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setIsloading] = useState(true);
 
   useEffect(() => {
     const fetchTodo = async () => {
-      setLoading(true);
       try {
         if (id) {
           // fetch single todo by id from the URL
@@ -33,12 +34,12 @@ export const SingleTodoPage = () => {
         console.error('Failed to load todos', err);
         setTodo(null);
       } finally {
-        setLoading(false);
+        setIsloading(false);
       }
     };
 
     fetchTodo();
-  }, [filters, id]);
+  }, [dispatch, filters, id]);
 
   const goBack = () => navigate(-1);
 

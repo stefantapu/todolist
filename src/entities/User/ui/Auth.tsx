@@ -1,5 +1,7 @@
 import {
+  Box,
   Button,
+  CircularProgress,
   Container,
   InputAdornment,
   Paper,
@@ -15,19 +17,13 @@ import { rootApi } from '../../../shared/api/rootApi';
 import type { UserType } from '../model/userType';
 import { useSnackbar } from 'notistack';
 import type { AxiosError } from 'axios';
-import {
-  selectIsLoading,
-  setIsLoading,
-  setUser,
-} from '../model/store/userStore';
+import { selectIsLoading, setIsLoading, setUser } from '../model/store/userStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const [loginFormName, setLoginFormName] = useState<'login' | 'register'>(
-    'login'
-  );
+  const [loginFormName, setLoginFormName] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
@@ -36,8 +32,8 @@ const Auth = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    dispatch(setIsLoading(true));
     try {
+      dispatch(setIsLoading(true));
       const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
       const loginData = await rootApi.post<UserType>(url, {
         username,
@@ -71,6 +67,20 @@ const Auth = () => {
 
   if (error) {
     throw new Error('Error');
+  }
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
@@ -154,17 +164,12 @@ const Auth = () => {
             disabled={isLoading}
             fullWidth
             sx={{
-              backgroundColor:
-                loginFormName === 'login' ? '#1976d2' : '#3ecd3eff',
+              backgroundColor: loginFormName === 'login' ? '#1976d2' : '#3ecd3eff',
             }}
           >
             {loginFormName === 'login' ? 'Login' : 'Register'}
           </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => setError(true)}
-          >
+          <Button variant="contained" color="error" onClick={() => setError(true)}>
             Throw Error
           </Button>
         </Stack>

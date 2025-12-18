@@ -7,23 +7,23 @@ import {
   updateTodo,
   setTodos,
   selectFilters,
+  setIsLoading,
 } from '../model/store/todosStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
 import { createTodo, getTodos } from '../api/todoApi';
 import { mockTodos } from '../model/mockTodos';
 import { useSnackbar } from 'notistack';
-import { selectUser } from '../../User/model/store/userStore';
+import { selectIsLoading, selectUser } from '../../User/model/store/userStore';
 
 const Todos = () => {
   const { enqueueSnackbar } = useSnackbar();
-
   const dispatch = useAppDispatch();
+
   const todos = useAppSelector(selectTodos);
   const user = useAppSelector(selectUser);
   const filters = useAppSelector(selectFilters);
-
-  const [isLoading, setIsLoading] = useState(true);
+  const isLoading = useAppSelector(selectIsLoading);
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,9 +53,6 @@ const Todos = () => {
       .catch(() => {
         enqueueSnackbar('Error fetching todos', { variant: 'error' });
         dispatch(setTodos([]));
-      })
-      .finally(() => {
-        setIsLoading(false);
       });
   }, [dispatch, enqueueSnackbar, filters]);
 
@@ -85,15 +82,14 @@ const Todos = () => {
     } catch (error) {
       console.log(error);
       enqueueSnackbar('Error adding todo', { variant: 'error' });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleCreateTestTasks = async () => {
+    dispatch(setIsLoading(true));
     try {
       if (!user?.access_token) return;
-      setIsLoading(true);
+
       const createPromises = mockTodos.map(m => {
         const payload: CreateTodoType = {
           title: m.title,
@@ -113,14 +109,13 @@ const Todos = () => {
       console.error(error);
       enqueueSnackbar('Error creating test tasks', { variant: 'error' });
     } finally {
-      setIsLoading(false);
+      dispatch(setIsLoading(false));
     }
   };
 
   useEffect(() => {
     if (!user?.access_token) return;
     handleGetTodosFromServer();
-    return;
   }, [handleGetTodosFromServer, user?.access_token]);
 
   if (isLoading) {
