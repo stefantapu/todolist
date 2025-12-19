@@ -1,12 +1,21 @@
 import { rootApi } from '../../../shared/api/rootApi';
-import type { TodosStore } from '../model/store/todosStore';
+import { type TodosStore } from '../model/store/todosStore';
 import type { CreateTodoType, TodoType } from '../model/todoType';
 
 export const getTodos = async (filters: TodosStore['filters']) => {
   let queryParams = `?page=${filters.page}&limit=${filters.limit}`;
+
   if (filters.completed !== 'all') {
     queryParams += `&completed=${filters.completed}`;
   }
+  if (filters.search) {
+    queryParams += `&search=${filters.search}`;
+  }
+  return await rootApi.get<TodoType[]>(`/todos${queryParams}`);
+};
+
+export const getNextPage = async (filters: TodosStore['filters']) => {
+  let queryParams = `?page=${filters.page + 1}&limit=${filters.limit}`;
   if (filters.search) {
     queryParams += `&search=${filters.search}`;
   }

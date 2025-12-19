@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import { Button, CircularProgress, Grid, Input, Paper, Stack } from '@mui/material';
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import type { CreateTodoType, TodoType } from '../model/todoType';
 import {
   selectTodos,
@@ -26,7 +26,6 @@ const Todos = () => {
   const isLoading = useAppSelector(selectIsLoading);
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
 
   const setTodo = useCallback(
     (todo: TodoType) => {
@@ -34,16 +33,6 @@ const Todos = () => {
     },
     [dispatch]
   );
-
-  const filteredTodos = useMemo(() => {
-    const q = searchQuery.trim();
-    if (!q) return todos;
-    const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
-    return todos.filter(todo => {
-      const title = (todo.title || '').toLowerCase();
-      return terms.every(term => title.includes(term));
-    });
-  }, [todos, searchQuery]);
 
   const handleGetTodosFromServer = useCallback(async () => {
     getTodos(filters)
@@ -187,36 +176,6 @@ const Todos = () => {
           </Button>
         </Stack>
       </Paper>
-
-      {/*Search by title sorting list */}
-      <Paper elevation={24} sx={{ padding: 4, margin: 2, marginTop: 4 }}>
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{
-            width: '100%',
-            alignItems: 'center',
-          }}
-        >
-          <Input
-            sx={{
-              width: '100%',
-            }}
-            placeholder="Search title (multi-term), e.g. 'buy milk'"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            inputProps={{ 'aria-label': 'search todos by title' }}
-          />
-          <Button
-            variant="outlined"
-            onClick={() => setSearchQuery('')}
-            disabled={!searchQuery}
-          >
-            Clear
-          </Button>
-        </Stack>
-      </Paper>
-
       <Grid
         container
         direction="row"
@@ -229,7 +188,7 @@ const Todos = () => {
         }}
       >
         {/* Рендерим каждую задачу через компонент Todo */}
-        {filteredTodos.map(todo => {
+        {todos.map(todo => {
           return <Todo todo={todo} key={todo._id} setTodo={setTodo} />;
         })}
       </Grid>

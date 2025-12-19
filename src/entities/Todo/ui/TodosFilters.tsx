@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -6,6 +7,7 @@ import {
   ButtonGroup,
   Input,
   MenuItem,
+  Paper,
   Select,
   type SelectChangeEvent,
 } from '@mui/material';
@@ -18,18 +20,38 @@ import {
   setPage,
   setSearch,
 } from '../model/store/todosStore';
-import { useDebounce } from 'use-debounce';
+import { useDebouncedCallback } from 'use-debounce';
+import { getNextPage } from '../api/todoApi';
 
 const TodosFilters = () => {
   const filters = useAppSelector(selectFilters);
+  const [localSearch, setLocalSearch] = useState(filters.search || '');
   const todosLenght = useAppSelector(selectTodos).length;
   const dispatch = useAppDispatch();
+  const [isNextDisabled, setIsNextDisabled] = useState(false);
+
+  useEffect(() => {
+    getNextPage(filters)
+      .then(({ data }) => setIsNextDisabled(data.length === 0))
+      .catch(() => setIsNextDisabled(true));
+  }, [filters, filters.page]);
+
+  // мемоизированная дебаунс-функция для поиска
+  const debouncedSetSearch = useDebouncedCallback((value: string) => {
+    dispatch(setSearch(value));
+  }, 300);
+
   const handleFilterChange = (filter: 'true' | 'false' | 'all') => {
     dispatch(setCompletedFilter(filter));
   };
-  const hanldeChangeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setSearch(e.target.value));
+
+  // обновляем локальный стейт мгновенно и диспатчим в стор через дебаунс
+  const handleChangeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setLocalSearch(v);
+    debouncedSetSearch(v);
   };
+
   const handleChangeLimit = (e: SelectChangeEvent<number>) => {
     dispatch(setLimit(e.target.value));
   };
@@ -45,51 +67,53 @@ const TodosFilters = () => {
 
   return (
     <>
-      <Accordion>
-        <AccordionSummary>Filters</AccordionSummary>
-        <AccordionDetails>
-          <Input
-            value={filters.search || ''}
-            onChange={hanldeChangeSearch}
-            placeholder="Search..."
-          />
+      <Paper elevation={24} sx={{ padding: 4, margin: 2, marginTop: 4 }}>
+        <Accordion>
+          <AccordionSummary>Filters</AccordionSummary>
+          <AccordionDetails>
+            <Input
+              value={localSearch}
+              onChange={handleChangeSearch}
+              placeholder="Search..."
+            />
+            <ButtonGroup>
+              <Button
+                onClick={() => handleFilterChange('true')}
+                variant={filters.completed === 'true' ? 'contained' : 'outlined'}
+              >
+                Completed
+              </Button>
+              <Button
+                onClick={() => handleFilterChange('false')}
+                variant={filters.completed === 'false' ? 'contained' : 'outlined'}
+              >
+                In Progress
+              </Button>
+              <Button
+                onClick={() => handleFilterChange('all')}
+                variant={filters.completed === 'all' ? 'contained' : 'outlined'}
+              >
+                All
+              </Button>
+            </ButtonGroup>
+            <Select value={filters.limit} variant="filled" onChange={handleChangeLimit}>
+              <MenuItem value={5}>5</MenuItem>
+              <MenuItem value={10}>10</MenuItem>
+              <MenuItem value={20}>20</MenuItem>
+            </Select>
+          </AccordionDetails>
+        </Accordion>
+        <Accordion>
           <ButtonGroup>
-            <Button
-              onClick={() => handleFilterChange('true')}
-              variant={filters.completed === 'true' ? 'contained' : 'outlined'}
-            >
-              Completed
+            <Button onClick={handlePrevClick} disabled={filters.page === 1}>
+              ...Prev
             </Button>
-            <Button
-              onClick={() => handleFilterChange('false')}
-              variant={filters.completed === 'false' ? 'contained' : 'outlined'}
-            >
-              In Progress
-            </Button>
-            <Button
-              onClick={() => handleFilterChange('all')}
-              variant={filters.completed === 'all' ? 'contained' : 'outlined'}
-            >
-              All
+            <Button onClick={handleNextClick} disabled={isNextDisabled}>
+              Next...
             </Button>
           </ButtonGroup>
-          <Select value={filters.limit} variant="filled" onChange={handleChangeLimit}>
-            <MenuItem value={5}>5</MenuItem>
-            <MenuItem value={10}>10</MenuItem>
-            <MenuItem value={20}>20</MenuItem>
-          </Select>
-        </AccordionDetails>
-      </Accordion>
-      <Accordion>
-        <ButtonGroup>
-          <Button onClick={handlePrevClick} disabled={filters.page === 1}>
-            ...Prev
-          </Button>
-          <Button onClick={handleNextClick} disabled={todosLenght !== filters.limit}>
-            Next..
-          </Button>
-        </ButtonGroup>
-      </Accordion>
+        </Accordion>
+      </Paper>
     </>
   );
 };
