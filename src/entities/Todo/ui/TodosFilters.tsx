@@ -64,6 +64,15 @@ const TodosFilters = () => {
     if (todosLenght !== filters.limit) return;
     dispatch(setPage(filters.page + 1));
   };
+  const handleResetAll = () => {
+    setLocalSearch('');
+    dispatch(setCompletedFilter('all'));
+    dispatch(setSearch(undefined));
+    dispatch(setPage(1));
+  };
+  const handleResetPage = () => {
+    dispatch(setPage(1));
+  };
 
   return (
     <>
@@ -90,13 +99,22 @@ const TodosFilters = () => {
                 In Progress
               </Button>
               <Button
-                onClick={() => handleFilterChange('all')}
+                onClick={() => {
+                  handleResetAll();
+                }}
                 variant={filters.completed === 'all' ? 'contained' : 'outlined'}
               >
                 All
               </Button>
             </ButtonGroup>
-            <Select value={filters.limit} variant="filled" onChange={handleChangeLimit}>
+            <Select
+              value={filters.limit}
+              variant="filled"
+              onChange={e => {
+                handleResetPage();
+                handleChangeLimit(e as SelectChangeEvent<number>);
+              }}
+            >
               <MenuItem value={5}>5</MenuItem>
               <MenuItem value={10}>10</MenuItem>
               <MenuItem value={20}>20</MenuItem>
