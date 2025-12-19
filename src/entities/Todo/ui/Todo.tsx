@@ -295,7 +295,7 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
                 fontSize: isFull ? 18 : 14,
               }}
             >
-              {formatDistanceToNow(todo.updatedAt)}
+              {`Updated: ${formatDistanceToNow(todo.updatedAt)} ago`}
             </Typography>
             <IconButton
               aria-label="delete"
