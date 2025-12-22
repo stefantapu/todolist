@@ -1,49 +1,38 @@
 import Box from '@mui/material/Box';
 import { Button, CircularProgress, Grid, Input, Paper, Stack } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
-import type { CreateTodoType, TodoType } from '../model/todoType';
-import {
-  selectTodos,
-  updateTodo,
-  setTodos,
-  selectFilters,
-  setIsLoading,
-} from '../model/store/todosStore';
+import React, { useEffect, useState } from 'react';
+import type { CreateTodoType } from '../model/todoType';
+import { selectFilters, setIsLoading } from '../model/store/todosStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
-import { createTodo, getTodos } from '../api/todoApi';
+import { createTodo, useAddTodoMutation, useGetTodosQuery } from '../api/todoApi';
 import { mockTodos } from '../model/mockTodos';
 import { useSnackbar } from 'notistack';
-import { selectIsLoading, selectUser } from '../../User/model/store/userStore';
+import { selectUser } from '../../User/model/store/userStore';
 
 const Todos = () => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useAppDispatch();
 
-  const todos = useAppSelector(selectTodos);
+  // const todos = useAppSelector(selectTodos);
   const user = useAppSelector(selectUser);
   const filters = useAppSelector(selectFilters);
-  const isLoading = useAppSelector(selectIsLoading);
+  // const isLoading = useAppSelector(selectIsLoading);
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
 
-  const setTodo = useCallback(
-    (todo: TodoType) => {
-      dispatch(updateTodo(todo));
-    },
-    [dispatch]
-  );
+  const {
+    data,
+    isLoading: isGettingTodos,
+    isError: isGettingError,
+  } = useGetTodosQuery(filters);
+  const [
+    addTodoToBackend,
+    { isLoading: isAddingTodo, isError: isAddingError, isSuccess: isAddedSucces },
+  ] = useAddTodoMutation();
 
-  const handleGetTodosFromServer = useCallback(async () => {
-    getTodos(filters)
-      .then(response => {
-        dispatch(setTodos(response.data || []));
-      })
-      .catch(() => {
-        enqueueSnackbar('Error fetching todos', { variant: 'error' });
-        dispatch(setTodos([]));
-      });
-  }, [dispatch, enqueueSnackbar, filters]);
+  const isLoading = isAddingTodo || isGettingTodos;
+  const isError = isAddingError || isGettingError;
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewTodoTitle(e.target.value);
@@ -52,26 +41,8 @@ const Todos = () => {
     setNewTodoDescription(e.target.value);
   };
 
-  const handleClearFields = () => {
-    setNewTodoTitle('');
-    setNewTodoDescription('');
-  };
-
-  const handldeAddTodo = async () => {
-    try {
-      if (!user?.access_token) return;
-
-      const newTodo: CreateTodoType = {
-        title: newTodoTitle,
-        description: newTodoDescription.trim() ? newTodoDescription : ' ',
-      };
-      await createTodo(newTodo);
-      handleClearFields();
-      await handleGetTodosFromServer();
-    } catch (error) {
-      console.log(error);
-      enqueueSnackbar('Error adding todo', { variant: 'error' });
-    }
+  const handldeAddTodo = () => {
+    addTodoToBackend({ title: newTodoTitle, description: newTodoDescription });
   };
 
   const handleCreateTestTasks = async () => {
@@ -93,7 +64,6 @@ const Todos = () => {
         enqueueSnackbar(`Created ${succeeded} test tasks`, { variant: 'success' });
       if (failed)
         enqueueSnackbar(`${failed} tasks failed to create`, { variant: 'warning' });
-      await handleGetTodosFromServer();
     } catch (error) {
       console.error(error);
       enqueueSnackbar('Error creating test tasks', { variant: 'error' });
@@ -103,9 +73,20 @@ const Todos = () => {
   };
 
   useEffect(() => {
-    if (!user?.access_token) return;
-    handleGetTodosFromServer();
-  }, [handleGetTodosFromServer, user?.access_token]);
+    const handleClearFields = () => {
+      setNewTodoTitle('');
+      setNewTodoDescription('');
+    };
+    if (isAddedSucces) {
+      handleClearFields();
+    }
+  }, [isAddedSucces]);
+
+  useEffect(() => {
+    if (isError) {
+      enqueueSnackbar('Error fetching todos', { variant: 'error' });
+    }
+  }, [enqueueSnackbar, isError]);
 
   if (isLoading) {
     return (
@@ -188,8 +169,8 @@ const Todos = () => {
         }}
       >
         {/* Рендерим каждую задачу через компонент Todo */}
-        {todos.map(todo => {
-          return <Todo todo={todo} key={todo._id} setTodo={setTodo} />;
+        {data?.map(todo => {
+          return <Todo todo={todo} key={todo._id} />;
         })}
       </Grid>
     </Box>

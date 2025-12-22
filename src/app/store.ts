@@ -1,17 +1,17 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { userStore } from '../entities/User/model/store/userStore';
-import {
-  useDispatch,
-  useSelector,
-  type TypedUseSelectorHook,
-} from 'react-redux';
+import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux';
 import { todosStore } from '../entities/Todo/model/store/todosStore';
+import { todoApiRTK } from '../entities/Todo/api/todoApi';
 
 export const store = configureStore({
   reducer: {
     [userStore.name]: userStore.reducer,
     [todosStore.name]: todosStore.reducer,
+    [todoApiRTK.reducerPath]: todoApiRTK.reducer,
   },
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware().concat(todoApiRTK.middleware),
 });
 
 export type AppStore = typeof store;

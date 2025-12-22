@@ -1,6 +1,19 @@
+import type { RootState } from '../../../app/store';
 import { rootApi } from '../../../shared/api/rootApi';
 import { type TodosStore } from '../model/store/todosStore';
 import type { CreateTodoType, TodoType } from '../model/todoType';
+
+const getQueryParams = (filters: TodosStore['filters']) => {
+  let queryParams = `?page=${filters.page}&limit=${filters.limit}`;
+
+  if (filters.completed !== 'all') {
+    queryParams += `&completed=${filters.completed}`;
+  }
+  if (filters.search) {
+    queryParams += `&search=${filters.search}`;
+  }
+  return queryParams;
+};
 
 export const getTodos = async (filters: TodosStore['filters']) => {
   let queryParams = `?page=${filters.page}&limit=${filters.limit}`;
@@ -39,6 +52,45 @@ export const editTodoTitleAndDescription = async (todo: CreateTodoType, id: stri
 };
 
 export const editTodoCompleted = async (completed: boolean, id: string) => {
-  // send an object body to match typical PATCH expectations
   return await rootApi.patch<TodoType>(`/todos/${id}`, { completed });
 };
+
+// Need to use the React-specific entry point to import createApi
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+
+// Define a service using a base URL and expected endpoints
+export const todoApiRTK = createApi({
+  reducerPath: 'todoApiRTK',
+  tagTypes: ['Todo'],
+  baseQuery: fetchBaseQuery({
+    baseUrl: 'https://todos-be.vercel.app/',
+    prepareHeaders: (headers, { getState }) => {
+      const token = (getState() as RootState).user.user?.access_token;
+      if (token) {
+        headers.set('authorization', `Bearer ${token}`);
+      }
+      return headers;
+    },
+  }),
+  endpoints: builder => ({
+    getTodos: builder.query<TodoType[], TodosStore['filters']>({
+      query: filters => {
+        const queryParams = getQueryParams(filters);
+        return `/todos${queryParams}`;
+      },
+      providesTags: ['Todo'],
+    }),
+    addTodo: builder.mutation<TodoType, CreateTodoType>({
+      query: todo => ({
+        url: `/todos/`,
+        method: `POST`,
+        body: todo,
+      }),
+      invalidatesTags: ['Todo'],
+    }),
+  }),
+});
+
+// Export hooks for usage in functional components, which are
+// auto-generated based on the defined endpoints
+export const { useGetTodosQuery, useAddTodoMutation } = todoApiRTK;
