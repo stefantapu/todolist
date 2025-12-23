@@ -21,11 +21,12 @@ const Todos = () => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
 
+  //RTK
   const {
     data,
     isLoading: isGettingTodos,
     isError: isGettingError,
-  } = useGetTodosQuery(filters);
+  } = useGetTodosQuery(filters, { skip: !user?.access_token });
   const [
     addTodoToBackend,
     { isLoading: isAddingTodo, isError: isAddingError, isSuccess: isAddedSucces },

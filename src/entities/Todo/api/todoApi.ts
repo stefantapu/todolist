@@ -1,5 +1,5 @@
-import type { RootState } from '../../../app/store';
 import { rootApi } from '../../../shared/api/rootApi';
+import { rtkApi } from '../../../shared/api/rtkAPI';
 import { type TodosStore } from '../model/store/todosStore';
 import type { CreateTodoType, TodoType } from '../model/todoType';
 
@@ -55,23 +55,8 @@ export const editTodoCompleted = async (completed: boolean, id: string) => {
   return await rootApi.patch<TodoType>(`/todos/${id}`, { completed });
 };
 
-// Need to use the React-specific entry point to import createApi
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-
 // Define a service using a base URL and expected endpoints
-export const todoApiRTK = createApi({
-  reducerPath: 'todoApiRTK',
-  tagTypes: ['Todo'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: 'https://todos-be.vercel.app/',
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as RootState).user.user?.access_token;
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+export const todoApiRTK = rtkApi.injectEndpoints({
   endpoints: builder => ({
     getTodos: builder.query<TodoType[], TodosStore['filters']>({
       query: filters => {

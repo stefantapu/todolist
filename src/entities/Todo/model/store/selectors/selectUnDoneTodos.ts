@@ -1,11 +1,13 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { selectTodos } from '../todosStore';
+import { todoApiRTK } from '../../../api/todoApi';
 
-export const selectUnDoneTodos = createSelector([selectTodos], todos =>
-  todos.filter(todo => !todo.completed)
+export const selectUnDoneTodos = createSelector(
+  // @ts-ignore
+  [todoApiRTK.endpoints.getTodos.select()],
+  todos => todos.data?.filter(todo => !todo.completed)
 );
 
 export const selectUnDoneTodosLenght = createSelector(
   [selectUnDoneTodos],
-  todos => todos.length
+  todos => todos?.length || 0
 );
