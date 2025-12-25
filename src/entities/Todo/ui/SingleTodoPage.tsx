@@ -1,49 +1,38 @@
-import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Box, Button, CircularProgress, Typography } from '@mui/material';
 import { Todo } from './Todo';
-import type { TodoType } from '../model/todoType';
-import { getTodos, getTodoById } from '../api/todoApi';
-import { useAppSelector } from '../../../app/store';
-import { selectFilters } from '../model/store/todosStore';
-import { useDispatch } from 'react-redux';
+import { useGetTodoByIdQuery } from '../api/todoApi';
 
 export const SingleTodoPage = () => {
   const { id } = useParams<{ id: string }>();
-  const filters = useAppSelector(selectFilters);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const [todo, setTodo] = useState<TodoType | null>(null);
-  const [loading, setIsloading] = useState(true);
-
-  useEffect(() => {
-    const fetchTodo = async () => {
-      try {
-        if (id) {
-          // fetch single todo by id from the URL
-          const response = await getTodoById(id);
-          const item: TodoType | null = response?.data ?? null;
-          setTodo(item);
-        } else {
-          const response = await getTodos(filters);
-          const items: TodoType[] = response.data || [];
-          const found = items.find(t => t._id === id) || null;
-          setTodo(found);
-        }
-      } catch (err) {
-        console.error('Failed to load todos', err);
-        setTodo(null);
-      } finally {
-        setIsloading(false);
-      }
-    };
-
-    fetchTodo();
-  }, [dispatch, filters, id]);
 
   const goBack = () => navigate(-1);
 
-  if (loading) {
+  const {
+    data: todo,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+  } = useGetTodoByIdQuery(id ?? null, {
+    skip: !id,
+  });
+
+  if (!id) {
+    return (
+      <Container>
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6">No todo id provided</Typography>
+          <Button onClick={goBack} sx={{ mt: 2 }} variant="contained">
+            Back
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+
+  if (isLoading || isFetching) {
     return (
       <Container>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
@@ -53,11 +42,14 @@ export const SingleTodoPage = () => {
     );
   }
 
-  if (!id) {
+  if (isError) {
     return (
       <Container>
         <Box sx={{ mt: 4 }}>
-          <Typography variant="h6">No todo id provided</Typography>
+          <Typography variant="h6">Failed to load todo</Typography>
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            {JSON.stringify(error)}
+          </Typography>
           <Button onClick={goBack} sx={{ mt: 2 }} variant="contained">
             Back
           </Button>
@@ -86,15 +78,7 @@ export const SingleTodoPage = () => {
           Back
         </Button>
       </Box>
-
-      <Todo
-        todo={todo}
-        variant="fullpage"
-        setTodo={(t: TodoType) => {
-          // allow the child to update local page state (optimistic updates)
-          setTodo(prev => (prev && t._id === prev._id ? { ...prev, ...t } : prev));
-        }}
-      />
+      <Todo todo={todo} variant="fullpage" />
     </Container>
   );
 };

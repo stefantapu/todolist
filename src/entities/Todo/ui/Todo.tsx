@@ -2,33 +2,28 @@ import { useState, useRef, memo } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import type { CreateTodoType, TodoType } from '../model/todoType';
+import type { CheckTodoType, EditTodoType, TodoType } from '../model/todoType';
 import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import { Grid, Paper, Stack, TextField } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import {
-  deleteTodo,
-  editTodoCompleted,
-  editTodoTitleAndDescription,
-  getTodos,
+  useCheckTodoMutation,
+  useDeleteTodoMutation,
+  useEditTodoMutation,
 } from '../api/todoApi';
-import { useAppDispatch, useAppSelector } from '../../../app/store';
-import { selectFilters, setTodos } from '../model/store/todosStore';
 import { formatDistanceToNow } from 'date-fns';
 
 type TodoProps = {
   todo: TodoType;
-  setTodo?: (todo: TodoType) => void;
   variant?: 'card' | 'fullpage';
 };
 
-export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const filters = useAppSelector(selectFilters);
+export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
+  // const dispatch = useAppDispatch();
+  // const filters = useAppSelector(selectFilters);
   const { enqueueSnackbar } = useSnackbar();
   const [editingField, setEditingField] = useState<'title' | 'description' | null>(null);
   const [editedTitle, setEditedTitle] = useState(todo.title);
@@ -44,28 +39,13 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
       enqueueSnackbar('No changes', { variant: 'info' });
       return;
     }
-
     try {
-      const newTodo: CreateTodoType = {
+      const newTodo: EditTodoType = {
         title: editedTitle,
         description: editedDescription,
+        _id: todo._id,
       };
-
-      // send patch and use returned todo to update local and global state
-      const res = await editTodoTitleAndDescription(newTodo, todo._id);
-      const updatedTodo: TodoType = res?.data ?? { ...todo, ...newTodo };
-
-      // update global list
-      const allRes = await getTodos(filters);
-      dispatch(setTodos(allRes.data || []));
-
-      // update page-local todo if parent passed setter (optimistic / local sync)
-      setTodo?.(updatedTodo);
-
-      // also update local edit fields to match saved data
-      setEditedTitle(updatedTodo.title);
-      setEditedDescription(updatedTodo.description);
-
+      await editTodoTitleAndDescription(newTodo);
       setEditingField(null);
       enqueueSnackbar('Saved!', { variant: 'success' });
     } catch (error) {
@@ -74,12 +54,16 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
     }
   };
 
+  //RTK
+  const [editTodoTitleAndDescription] = useEditTodoMutation();
+  const [checkTodo] = useCheckTodoMutation();
+  const [deleteTodoRTK] = useDeleteTodoMutation();
+
   const handleDeleteTodo = async (id: string) => {
     try {
-      await deleteTodo(id);
-      const response = await getTodos(filters);
-      dispatch(setTodos(response.data || []));
+      await deleteTodoRTK(id).unwrap();
       enqueueSnackbar('Task deleted!', { variant: 'success' });
+      // список обновится сам, если он получен через useGetTodosQuery и providesTags/invalidatesTags
     } catch (error) {
       console.error('Failed to delete todo:', error);
       enqueueSnackbar('Failed to delete todo', { variant: 'error' });
@@ -88,9 +72,11 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
 
   const handleCompleted = async (completed: boolean) => {
     try {
-      await editTodoCompleted(completed, todo._id);
-      const response = await getTodos(filters);
-      dispatch(setTodos(response.data || []));
+      const newCompleted: CheckTodoType = {
+        _id: todo._id,
+        completed: completed,
+      };
+      checkTodo(newCompleted);
       if (completed) {
         enqueueSnackbar('Nice!', { variant: 'success' });
       } else {
@@ -104,7 +90,6 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
 
   const handleToggleCompleted = () => {
     const newCompleted = !todo.completed;
-    setTodo?.({ ...todo, completed: newCompleted });
     handleCompleted(newCompleted);
   };
 
@@ -205,11 +190,7 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
                       <div></div>
                     ) : (
                       <NavLink to={`/todo/${todo._id}`}>
-                        <IconButton
-                          aria-label="open todo"
-                          size="small"
-                          // onClick={() => navigate(`/todo/${todo._id}`)} //No link when hovering
-                        >
+                        <IconButton aria-label="open todo" size="small">
                           <OpenInNewIcon fontSize="small" />
                         </IconButton>
                       </NavLink>
@@ -301,7 +282,6 @@ export const Todo = memo(({ todo, setTodo, variant = 'card' }: TodoProps) => {
               aria-label="delete"
               onClick={() => {
                 handleDeleteTodo(todo._id);
-                navigate(`/`);
               }}
             >
               <DeleteIcon />

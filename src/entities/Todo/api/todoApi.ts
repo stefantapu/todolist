@@ -1,7 +1,12 @@
 import { rootApi } from '../../../shared/api/rootApi';
 import { rtkApi } from '../../../shared/api/rtkAPI';
 import { type TodosStore } from '../model/store/todosStore';
-import type { CreateTodoType, TodoType } from '../model/todoType';
+import type {
+  CheckTodoType,
+  CreateTodoType,
+  EditTodoType,
+  TodoType,
+} from '../model/todoType';
 
 const getQueryParams = (filters: TodosStore['filters']) => {
   let queryParams = `?page=${filters.page}&limit=${filters.limit}`;
@@ -43,10 +48,6 @@ export const createTodo = async (todo: CreateTodoType) => {
   return await rootApi.post<TodoType>('/todos', todo);
 };
 
-export const deleteTodo = async (id: string) => {
-  return await rootApi.delete('/todos/' + id);
-};
-
 export const editTodoTitleAndDescription = async (todo: CreateTodoType, id: string) => {
   return await rootApi.patch<TodoType>(`/todos/${id}`, todo);
 };
@@ -65,6 +66,12 @@ export const todoApiRTK = rtkApi.injectEndpoints({
       },
       providesTags: ['Todo'],
     }),
+
+    getTodoById: builder.query<TodoType, string | null>({
+      query: id => `/todos/${id}`,
+      providesTags: ['Todo'],
+    }),
+
     addTodo: builder.mutation<TodoType, CreateTodoType>({
       query: todo => ({
         url: `/todos/`,
@@ -73,9 +80,45 @@ export const todoApiRTK = rtkApi.injectEndpoints({
       }),
       invalidatesTags: ['Todo'],
     }),
+
+    deleteTodo: builder.mutation<TodoType, string>({
+      query: id => ({
+        url: `/todos/${id}`,
+        method: `DELETE`,
+      }),
+      invalidatesTags: ['Todo'],
+    }),
+
+    editTodo: builder.mutation<TodoType, EditTodoType>({
+      query: todo => ({
+        url: `/todos/${todo._id}`,
+        method: `PATCH`,
+        body: {
+          title: todo.title,
+          description: todo.description,
+        },
+      }),
+      invalidatesTags: ['Todo'],
+    }),
+
+    checkTodo: builder.mutation<TodoType, CheckTodoType>({
+      query: todo => ({
+        url: `/todos/${todo._id}`,
+        method: `PATCH`,
+        body: { completed: todo.completed },
+      }),
+      invalidatesTags: ['Todo'],
+    }),
   }),
 });
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
-export const { useGetTodosQuery, useAddTodoMutation } = todoApiRTK;
+export const {
+  useGetTodosQuery,
+  useGetTodoByIdQuery,
+  useAddTodoMutation,
+  useDeleteTodoMutation,
+  useEditTodoMutation,
+  useCheckTodoMutation,
+} = todoApiRTK;

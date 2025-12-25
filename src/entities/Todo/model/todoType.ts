@@ -9,3 +9,5 @@ export type TodoType = {
 };
 
 export type CreateTodoType = Pick<TodoType, 'title' | 'description'>;
+export type EditTodoType = Pick<TodoType, 'title' | 'description' | '_id'>;
+export type CheckTodoType = Pick<TodoType, 'completed' | '_id'>;

@@ -13,20 +13,18 @@ import { selectUser } from '../../User/model/store/userStore';
 const Todos = () => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useAppDispatch();
-
-  // const todos = useAppSelector(selectTodos);
   const user = useAppSelector(selectUser);
   const filters = useAppSelector(selectFilters);
-  // const isLoading = useAppSelector(selectIsLoading);
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDescription, setNewTodoDescription] = useState('');
 
   //RTK
   const {
     data,
-    isLoading: isGettingTodos,
+    isFetching: isGettingTodos,
     isError: isGettingError,
   } = useGetTodosQuery(filters, { skip: !user?.access_token });
+
   const [
     addTodoToBackend,
     { isLoading: isAddingTodo, isError: isAddingError, isSuccess: isAddedSucces },
