@@ -20,7 +20,8 @@ const Todos = () => {
     data,
     isFetching: isGettingTodos,
     isError: isGettingError,
-  } = useGetTodosQuery(filters, { skip: !user?.access_token });
+    refetch,
+  } = useGetTodosQuery(filters, { skip: !user?.access_token, pollingInterval: 50000 });
 
   const [
     addTodoToBackend,
@@ -79,6 +80,9 @@ const Todos = () => {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Paper elevation={24} sx={{ padding: 4, margin: 2, marginTop: 4 }}>
+        <Button variant="contained" onClick={refetch}>
+          🔄 Refresh
+        </Button>
         <Stack
           direction="column"
           spacing={2}

@@ -39,7 +39,7 @@ const TodosFilters = () => {
   // мемоизированная дебаунс-функция для поиска
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     dispatch(setSearch(value));
-  }, 300);
+  }, 800);
 
   const handleFilterChange = (filter: 'true' | 'false' | 'all') => {
     dispatch(setCompletedFilter(filter));
@@ -124,10 +124,10 @@ const TodosFilters = () => {
         <Accordion>
           <ButtonGroup>
             <Button onClick={handlePrevClick} disabled={filters.page === 1}>
-              ...Prev
+              ...Previouse Page
             </Button>
             <Button onClick={handleNextClick} disabled={isNextDisabled}>
-              Next...
+              Next Page...
             </Button>
           </ButtonGroup>
         </Accordion>
