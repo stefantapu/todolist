@@ -22,8 +22,6 @@ type TodoProps = {
 };
 
 export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
-  // const dispatch = useAppDispatch();
-  // const filters = useAppSelector(selectFilters);
   const { enqueueSnackbar } = useSnackbar();
   const [editingField, setEditingField] = useState<'title' | 'description' | null>(null);
   const [editedTitle, setEditedTitle] = useState(todo.title);
@@ -63,7 +61,6 @@ export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
     try {
       await deleteTodoRTK(id).unwrap();
       enqueueSnackbar('Task deleted!', { variant: 'success' });
-      // список обновится сам, если он получен через useGetTodosQuery и providesTags/invalidatesTags
     } catch (error) {
       console.error('Failed to delete todo:', error);
       enqueueSnackbar('Failed to delete todo', { variant: 'error' });

@@ -1,18 +1,15 @@
 import Box from '@mui/material/Box';
 import { Button, CircularProgress, Grid, Input, Paper, Stack } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import type { CreateTodoType } from '../model/todoType';
-import { selectFilters, setIsLoading } from '../model/store/todosStore';
-import { useAppDispatch, useAppSelector } from '../../../app/store';
+import { selectFilters } from '../model/store/todosStore';
+import { useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
-import { createTodo, useAddTodoMutation, useGetTodosQuery } from '../api/todoApi';
-import { mockTodos } from '../model/mockTodos';
+import { useAddTodoMutation, useGetTodosQuery } from '../api/todoApi';
 import { useSnackbar } from 'notistack';
 import { selectUser } from '../../User/model/store/userStore';
 
 const Todos = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
   const filters = useAppSelector(selectFilters);
   const [newTodoTitle, setNewTodoTitle] = useState('');
@@ -41,34 +38,11 @@ const Todos = () => {
   };
 
   const handldeAddTodo = () => {
-    addTodoToBackend({ title: newTodoTitle, description: newTodoDescription });
-  };
-
-  const handleCreateTestTasks = async () => {
-    dispatch(setIsLoading(true));
-    try {
-      if (!user?.access_token) return;
-
-      const createPromises = mockTodos.map(m => {
-        const payload: CreateTodoType = {
-          title: m.title,
-          description: m.description?.trim() ? m.description : ' ',
-        };
-        return createTodo(payload);
-      });
-      const results = await Promise.allSettled(createPromises);
-      const succeeded = results.filter(r => r.status === 'fulfilled').length;
-      const failed = results.filter(r => r.status === 'rejected').length;
-      if (succeeded)
-        enqueueSnackbar(`Created ${succeeded} test tasks`, { variant: 'success' });
-      if (failed)
-        enqueueSnackbar(`${failed} tasks failed to create`, { variant: 'warning' });
-    } catch (error) {
-      console.error(error);
-      enqueueSnackbar('Error creating test tasks', { variant: 'error' });
-    } finally {
-      dispatch(setIsLoading(false));
+    if (!user?.access_token) {
+      enqueueSnackbar('Please sign in to add tasks', { variant: 'warning' });
+      return;
     }
+    addTodoToBackend({ title: newTodoTitle, description: newTodoDescription });
   };
 
   useEffect(() => {
@@ -143,16 +117,6 @@ const Todos = () => {
             }}
           >
             Add task
-          </Button>
-          <Button
-            variant="outlined"
-            disabled={!user?.access_token || isLoading}
-            onClick={handleCreateTestTasks}
-            sx={{
-              width: '50%',
-            }}
-          >
-            Create test tasks
           </Button>
         </Stack>
       </Paper>
