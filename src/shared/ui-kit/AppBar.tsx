@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from '../../app/store';
 import { selectUser, removeUser } from '../../entities/User/model/store/userStore';
 import { selectUnDoneTodosLenght } from '../../entities/Todo/model/store/selectors/selectUnDoneTodos';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useGetAllTodosQuery } from '../../entities/Todo/api/todoApi';
 
 interface Props {
   toggleTheme: () => void;
@@ -22,9 +23,18 @@ interface Props {
 const AppBar = ({ toggleTheme, mode }: Props) => {
   const dispatch = useAppDispatch();
 
-  const undoneTodos = useAppSelector(selectUnDoneTodosLenght);
   const user = useAppSelector(selectUser);
   const username = user?.username;
+
+  // инициируем наполнение кэша для счётчика
+  useGetAllTodosQuery(undefined, {
+    skip: !user?.access_token,
+    // опционально:
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  const undoneTodos = useAppSelector(selectUnDoneTodosLenght);
 
   const location = useLocation();
   const navigate = useNavigate();
