@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -21,20 +21,15 @@ import {
   setSearch,
 } from '../model/store/todosStore';
 import { useDebouncedCallback } from 'use-debounce';
-import { getNextPage } from '../api/todoApi';
 
 const TodosFilters = () => {
   const filters = useAppSelector(selectFilters);
   const [localSearch, setLocalSearch] = useState(filters.search || '');
   const todosLenght = useAppSelector(selectTodos).length;
   const dispatch = useAppDispatch();
-  const [isNextDisabled, setIsNextDisabled] = useState(false);
 
-  useEffect(() => {
-    getNextPage(filters)
-      .then(({ data }) => setIsNextDisabled(data.length === 0))
-      .catch(() => setIsNextDisabled(true));
-  }, [filters, filters.page]);
+  // если на странице пришло меньше limit — следующей страницы нет
+  const isNextDisabled = todosLenght < filters.limit;
 
   // мемоизированная дебаунс-функция для поиска
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
@@ -42,6 +37,8 @@ const TodosFilters = () => {
   }, 800);
 
   const handleFilterChange = (filter: 'true' | 'false' | 'all') => {
+    // при смене фильтра логично возвращать на 1 страницу
+    dispatch(setPage(1));
     dispatch(setCompletedFilter(filter));
   };
 
@@ -49,6 +46,7 @@ const TodosFilters = () => {
   const handleChangeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setLocalSearch(v);
+    dispatch(setPage(1));
     debouncedSetSearch(v);
   };
 
@@ -60,16 +58,20 @@ const TodosFilters = () => {
     if (filters.page === 1) return;
     dispatch(setPage(filters.page - 1));
   };
+
   const handleNextClick = () => {
-    if (todosLenght !== filters.limit) return;
+    // если нет полной страницы — дальше не идём
+    if (isNextDisabled) return;
     dispatch(setPage(filters.page + 1));
   };
+
   const handleResetAll = () => {
     setLocalSearch('');
     dispatch(setCompletedFilter('all'));
     dispatch(setSearch(undefined));
     dispatch(setPage(1));
   };
+
   const handleResetPage = () => {
     dispatch(setPage(1));
   };
@@ -99,9 +101,7 @@ const TodosFilters = () => {
                 In Progress
               </Button>
               <Button
-                onClick={() => {
-                  handleResetAll();
-                }}
+                onClick={handleResetAll}
                 variant={filters.completed === 'all' ? 'contained' : 'outlined'}
               >
                 All
@@ -121,6 +121,7 @@ const TodosFilters = () => {
             </Select>
           </AccordionDetails>
         </Accordion>
+
         <Accordion>
           <ButtonGroup>
             <Button onClick={handlePrevClick} disabled={filters.page === 1}>
