@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -11,25 +11,71 @@ import {
   Select,
   type SelectChangeEvent,
 } from '@mui/material';
+import { useDebouncedCallback } from 'use-debounce';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import {
   selectFilters,
-  selectTodos,
   setCompletedFilter,
   setLimit,
   setPage,
   setSearch,
 } from '../model/store/todosStore';
-import { useDebouncedCallback } from 'use-debounce';
+import { todoApiRTK } from '../api/todoApi';
 
 const TodosFilters = () => {
   const filters = useAppSelector(selectFilters);
-  const [localSearch, setLocalSearch] = useState(filters.search || '');
-  const todosLenght = useAppSelector(selectTodos).length;
   const dispatch = useAppDispatch();
+  const [localSearch, setLocalSearch] = useState(filters.search || '');
 
-  // если на странице пришло меньше limit — следующей страницы нет
-  const isNextDisabled = todosLenght < filters.limit;
+  const prefetchTodos = todoApiRTK.usePrefetch('getTodos');
+
+  const nextFilters = useMemo(() => ({ ...filters, page: filters.page + 1 }), [filters]);
+
+  const prevFilters = useMemo(
+    () => ({ ...filters, page: Math.max(1, filters.page - 1) }),
+    [filters]
+  );
+
+  // текущее состояние страницы (из RTK Query cache)
+  const currentPageResult = useAppSelector(state =>
+    todoApiRTK.endpoints.getTodos.select(filters)(state)
+  );
+
+  // next страница (из cache, если уже префетчили/открывали)
+  const nextPageResult = useAppSelector(state =>
+    todoApiRTK.endpoints.getTodos.select(nextFilters)(state)
+  );
+
+  // если next страница уже в кэше и она пустая — дальше нельзя
+  const isNextKnownEmpty =
+    nextPageResult.isSuccess && (nextPageResult.data?.length ?? 0) === 0;
+
+  const isNextDisabled =
+    isNextKnownEmpty ||
+    // эвристика: если текущая страница успешна и она не полная — next точно нет
+    (currentPageResult.isSuccess &&
+      (currentPageResult.data?.length ?? 0) < filters.limit);
+
+  // префетчим next (и опционально prev) при изменении страницы/фильтров
+  useEffect(() => {
+    // next
+    if (!isNextKnownEmpty) {
+      prefetchTodos(nextFilters, { force: false });
+    }
+    // prev (необязательно, но делает Prev мгновенным)
+    if (filters.page > 1) {
+      prefetchTodos(prevFilters, { force: false });
+    }
+  }, [
+    filters.page,
+    filters.limit,
+    filters.completed,
+    filters.search,
+    isNextKnownEmpty,
+    nextFilters,
+    prevFilters,
+    prefetchTodos,
+  ]);
 
   // мемоизированная дебаунс-функция для поиска
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
@@ -37,12 +83,10 @@ const TodosFilters = () => {
   }, 800);
 
   const handleFilterChange = (filter: 'true' | 'false' | 'all') => {
-    // при смене фильтра логично возвращать на 1 страницу
     dispatch(setPage(1));
     dispatch(setCompletedFilter(filter));
   };
 
-  // обновляем локальный стейт мгновенно и диспатчим в стор через дебаунс
   const handleChangeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setLocalSearch(v);
@@ -60,7 +104,6 @@ const TodosFilters = () => {
   };
 
   const handleNextClick = () => {
-    // если нет полной страницы — дальше не идём
     if (isNextDisabled) return;
     dispatch(setPage(filters.page + 1));
   };
@@ -107,6 +150,7 @@ const TodosFilters = () => {
                 All
               </Button>
             </ButtonGroup>
+
             <Select
               value={filters.limit}
               variant="filled"
