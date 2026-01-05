@@ -21,11 +21,7 @@ const ThemeContext = createContext<ThemeContextProps>({
 export const useThemeMode = () => useContext(ThemeContext);
 
 // Компонент ThemeProviderCustom обеспечивает приложение темой MUI и хранит состояние темы
-export const ThemeProviderCustom = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const ThemeProviderCustom = ({ children }: { children: React.ReactNode }) => {
   // Состояние для хранения текущего режима темы, берём из localStorage или по умолчанию 'light'
   const [mode, setMode] = useState<ColorMode>(
     (localStorage.getItem('theme') as ColorMode) || 'light'
@@ -40,8 +36,7 @@ export const ThemeProviderCustom = ({
   const theme = useMemo(() => createTheme({ palette: { mode } }), [mode]);
 
   // Функция для переключения между светлой и тёмной темой
-  const toggleTheme = () =>
-    setMode(prev => (prev === 'light' ? 'dark' : 'light'));
+  const toggleTheme = () => setMode(prev => (prev === 'light' ? 'dark' : 'light'));
 
   // Оборачиваем приложение в ThemeProvider и передаём контекст темы
   return (
