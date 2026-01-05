@@ -1,7 +1,9 @@
-import { Box, Button, Card } from '@mui/material';
+import { Box, Button, Card, Typography } from '@mui/material';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const About = () => {
+  const [count, setCounter] = useState(0);
   const navigate = useNavigate();
   return (
     <>
@@ -12,7 +14,15 @@ export const About = () => {
       >
         <Card elevation={4} sx={{ padding: 1 }}>
           <h1>About Page</h1>
-          <span>Version 0.0.2</span>
+          <Typography data-testid={'version-container'}></Typography>
+          <span data-testid={'counter'}>{count}</span>
+          <Button
+            variant="contained"
+            data-testid={'increment-button'}
+            onClick={() => setCounter(c => c + 1)}
+          >
+            +1
+          </Button>
           <Button variant="contained" onClick={() => navigate(-1)}>
             Go Back
           </Button>
