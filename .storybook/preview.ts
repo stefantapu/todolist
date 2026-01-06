@@ -1,7 +1,4 @@
 import type { Preview } from '@storybook/react-vite';
-import { ThemeProviderCustom } from '../src/app/ThemeProviderCustom.tsx';
-import { SnackbarProvider } from 'notistack';
-import React from 'react';
 
 const preview: Preview = {
   parameters: {
