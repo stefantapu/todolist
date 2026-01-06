@@ -42,8 +42,7 @@ export const mockTodos: TodoType[] = [
     title: 'Plan weekend trip',
     order: 5,
     completed: true,
-    description:
-      'Find a quiet place in the mountains, book Airbnb, prepare snacks',
+    description: 'Find a quiet place in the mountains, book Airbnb, prepare snacks',
     createdAt: '2025-10-19T14:20:00Z',
     updatedAt: '2025-10-25T11:10:00Z',
   },

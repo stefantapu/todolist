@@ -4,20 +4,16 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import './App.css';
 
-import { ThemeProviderCustom } from './ThemeProviderCustom.tsx';
-import { SnackbarProvider } from 'notistack';
-import { store } from './store.ts';
-import { Provider } from 'react-redux';
-import AppRoutes from './appRoutes.tsx';
+import Todos from '../entities/Todo/ui/Todos.tsx';
+import TodosFilters from '../entities/Todo/ui/TodosFilters.tsx';
 
-const App = () => (
-  <Provider store={store}>
-    <SnackbarProvider>
-      <ThemeProviderCustom>
-        <AppRoutes />
-      </ThemeProviderCustom>
-    </SnackbarProvider>
-  </Provider>
-);
+function App() {
+  return (
+    <>
+      <TodosFilters />
+      <Todos />
+    </>
+  );
+}
 
 export default App;

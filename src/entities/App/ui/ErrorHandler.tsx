@@ -21,10 +21,7 @@ class ErrorHandler extends Component<PropsWithChildren, { hasError: boolean }> {
       return (
         <>
           <Typography variant="h1">Something went Wrong</Typography>
-          <Button
-            variant="contained"
-            onClick={() => this.setState({ hasError: false })}
-          >
+          <Button variant="contained" onClick={() => this.setState({ hasError: false })}>
             Reset Error
           </Button>
           <NavLink to={'/'}>Main Page</NavLink>

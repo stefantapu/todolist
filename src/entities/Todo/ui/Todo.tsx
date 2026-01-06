@@ -1,59 +1,105 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, memo } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import type { TodoType } from '../model/todoType';
+import { NavLink } from 'react-router-dom';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import type { CheckTodoType, EditTodoType, TodoType } from '../model/todoType';
 import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import { Grid, Paper, Stack, TextField } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { removeTodo } from '../model/store/todosStore';
-import { useDispatch } from 'react-redux';
+import {
+  useCheckTodoMutation,
+  useDeleteTodoMutation,
+  useEditTodoMutation,
+} from '../api/todoApi';
+import { formatDistanceToNow } from 'date-fns';
 
 type TodoProps = {
   todo: TodoType;
-  setTodo?: (todo: TodoType) => void;
+  variant?: 'card' | 'fullpage';
 };
 
-export const Todo = ({ todo, setTodo }: TodoProps) => {
-  const dispatch = useDispatch();
-  const deleteTodo = (id: string) => {
-    dispatch(removeTodo(id));
-  };
-
+export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const [editingField, setEditingField] = useState<
-    'title' | 'description' | null
-  >(null);
+  const [editingField, setEditingField] = useState<'title' | 'description' | null>(null);
   const [editedTitle, setEditedTitle] = useState(todo.title);
   const [editedDescription, setEditedDescription] = useState(todo.description);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const saveChanges = () => {
-    setTodo?.({
-      ...todo,
-      title: editedTitle,
-      description: editedDescription,
-      updatedAt: new Date().toISOString(),
-    });
-    setEditingField(null);
-    enqueueSnackbar('Saved!', { variant: 'success' });
+  const isFull = variant === 'fullpage';
+
+  const handleEditTodo = async () => {
+    // If nothing changed
+    if (editedTitle === todo.title && editedDescription === todo.description) {
+      setEditingField(null);
+      enqueueSnackbar('No changes', { variant: 'info' });
+      return;
+    }
+    try {
+      const newTodo: EditTodoType = {
+        title: editedTitle,
+        description: editedDescription,
+        _id: todo._id,
+      };
+      await editTodoTitleAndDescription(newTodo);
+      setEditingField(null);
+      enqueueSnackbar('Saved!', { variant: 'success' });
+    } catch (error) {
+      console.error('Failed to edit todo:', error);
+      enqueueSnackbar('Failed to save todo', { variant: 'error' });
+    }
   };
 
-  const handleCheckClick = () => {
-    setTodo?.({ ...todo, completed: !todo.completed });
+  //RTK
+  const [editTodoTitleAndDescription] = useEditTodoMutation();
+  const [checkTodo] = useCheckTodoMutation();
+  const [deleteTodoRTK] = useDeleteTodoMutation();
+
+  const handleDeleteTodo = async (id: string) => {
+    try {
+      await deleteTodoRTK(id).unwrap();
+      enqueueSnackbar('Task deleted!', { variant: 'success' });
+    } catch (error) {
+      console.error('Failed to delete todo:', error);
+      enqueueSnackbar('Failed to delete todo', { variant: 'error' });
+    }
+  };
+
+  const handleCompleted = async (completed: boolean) => {
+    try {
+      const newCompleted: CheckTodoType = {
+        _id: todo._id,
+        completed: completed,
+      };
+      checkTodo(newCompleted);
+      if (completed) {
+        enqueueSnackbar('Nice!', { variant: 'success' });
+      } else {
+        enqueueSnackbar('Updated!', { variant: 'default' });
+      }
+    } catch (error) {
+      console.error('Failed to update completed state:', error);
+      enqueueSnackbar('Failed to update todo', { variant: 'error' });
+    }
+  };
+
+  const handleToggleCompleted = () => {
+    const newCompleted = !todo.completed;
+    handleCompleted(newCompleted);
   };
 
   return (
     <Box
       sx={{
         flexGrow: 1,
-        width: 'min(50%, 500px)',
-        height: '100%',
+        width: isFull ? '100%' : 'min(50%, 500px)',
+        height: isFull ? 'auto' : '100%',
       }}
     >
-      <Paper elevation={16} sx={{ padding: 2, height: '100%' }}>
-        <Stack spacing={4} sx={{ height: '100%' }}>
+      <Paper elevation={16} sx={{ padding: isFull ? 4 : 2, height: '100%' }}>
+        <Stack spacing={isFull ? 8 : 4} sx={{ height: '100%' }}>
           <Stack
             direction="row"
             sx={{
@@ -67,13 +113,12 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
               <TextField
                 fullWidth
                 autoFocus
-                inputRef={inputRef} // Attach the ref to the TextField
+                inputRef={inputRef}
                 value={editedTitle}
                 variant="standard"
                 onChange={e => setEditedTitle(e.target.value)}
-                onBlur={saveChanges}
+                onBlur={() => handleEditTodo()}
                 onFocus={() => {
-                  // Set cursor position to the end when focused
                   if (inputRef.current) {
                     inputRef.current.setSelectionRange(
                       editedTitle.length,
@@ -82,7 +127,7 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   }
                 }}
                 onKeyDown={e => {
-                  if (e.key === 'Enter') saveChanges();
+                  if (e.key === 'Enter') handleEditTodo();
                 }}
                 slotProps={{
                   root: { sx: { width: '100%' } },
@@ -98,10 +143,10 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   htmlInput: {
                     sx: {
                       fontWeight: 500,
-                      fontSize: 26,
+                      fontSize: isFull ? 36 : 26,
                       padding: 0,
                       margin: 0,
-                      lineHeight: 1.6,
+                      lineHeight: 1.2,
                       height: 'auto',
                     },
                   },
@@ -125,8 +170,8 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   sx={{
                     fontWeight: 500,
                     cursor: 'pointer',
-                    fontSize: 26,
-                    width: 'auto',
+                    fontSize: isFull ? 36 : 26,
+                    width: '100%',
                   }}
                   onDoubleClick={() => {
                     setEditedTitle(todo.title);
@@ -135,10 +180,20 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                 >
                   {todo.title}
                 </Typography>
-                <Checkbox
-                  checked={todo.completed}
-                  onClick={handleCheckClick} // переключаем completed при клике
-                />
+                <div>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Checkbox checked={todo.completed} onClick={handleToggleCompleted} />
+                    {isFull ? (
+                      <div></div>
+                    ) : (
+                      <NavLink to={`/todo/${todo._id}`}>
+                        <IconButton aria-label="open todo" size="small">
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
+                      </NavLink>
+                    )}
+                  </Box>
+                </div>
               </Stack>
             )}
           </Stack>
@@ -152,9 +207,9 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                 value={editedDescription}
                 variant="standard"
                 onChange={e => setEditedDescription(e.target.value)}
-                onBlur={saveChanges}
+                onBlur={() => handleEditTodo()}
                 onKeyDown={e => {
-                  if (e.key === 'Enter') saveChanges();
+                  if (e.key === 'Enter' && e.ctrlKey) handleEditTodo();
                 }}
                 slotProps={{
                   input: {
@@ -193,7 +248,6 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
                   whiteSpace: 'pre-wrap', // matches multiline textfield behavior
                 }}
                 onDoubleClick={() => {
-                  console.log('Double clicked description');
                   setEditedDescription(todo.description);
                   setEditingField('description');
                 }}
@@ -216,22 +270,22 @@ export const Todo = ({ todo, setTodo }: TodoProps) => {
               sx={{
                 display: 'block',
                 color: 'text.secondary',
-                fontSize: 10,
+                fontSize: isFull ? 18 : 14,
               }}
             >
-              Created: {new Date(todo.createdAt).toLocaleDateString()}
-              <br />
-              Modified: {new Date(todo.updatedAt).toLocaleDateString()}
+              {`Updated: ${formatDistanceToNow(todo.updatedAt)} ago`}
             </Typography>
             <IconButton
               aria-label="delete"
-              onClick={() => deleteTodo(todo._id)}
+              onClick={() => {
+                handleDeleteTodo(todo._id);
+              }}
             >
-              <DeleteIcon></DeleteIcon>
+              <DeleteIcon />
             </IconButton>
           </Grid>
         </Stack>
       </Paper>
     </Box>
   );
-};
+});
