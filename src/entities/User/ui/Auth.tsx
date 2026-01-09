@@ -55,7 +55,7 @@ const Auth = () => {
 
       const params = new URLSearchParams(window.location.search);
       const back = params.get('back');
-      console.log(back);
+
       navigate(back || '/');
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;

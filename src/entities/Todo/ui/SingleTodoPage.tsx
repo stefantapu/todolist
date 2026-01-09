@@ -73,7 +73,7 @@ export const SingleTodoPage = () => {
 
   return (
     <Container sx={{ py: 4 }}>
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
         <Button onClick={goBack} variant="contained" fullWidth>
           Back
         </Button>
