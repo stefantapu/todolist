@@ -30,13 +30,20 @@ const Auth = () => {
   const isLoading = useAppSelector(selectIsLoading);
   const navigate = useNavigate();
 
+  //Zod Validation
   const emailSchema = z.email({ message: 'Invalid email address!' });
-  const passwordSchema = z.string().min(8, { message: 'Invalid password, min 8 chars' });
+  const passwordSchema = z
+    .string()
+    .min(8, { message: 'Invalid password, min 8 chars' })
+    .max(50, { message: 'Password must be less than 50 characters' });
+  const loginSchema = z.object({
+    email: emailSchema,
+    password: passwordSchema,
+  });
 
   const handleSubmit = async () => {
     try {
-      emailSchema.parse(username);
-      passwordSchema.parse(password);
+      loginSchema.parse({ email: username, password });
 
       dispatch(setIsLoading(true));
       const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
@@ -67,8 +74,10 @@ const Auth = () => {
       }
     } catch (error) {
       if (error instanceof ZodError) {
-        enqueueSnackbar(`${error.issues[0].message}`, {
-          variant: 'error',
+        error.issues.forEach(issue => {
+          enqueueSnackbar(`${issue.message}`, {
+            variant: 'error',
+          });
         });
         return;
       }
