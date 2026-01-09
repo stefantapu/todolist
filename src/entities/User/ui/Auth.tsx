@@ -16,23 +16,28 @@ import { useState } from 'react';
 import { rootApi } from '../../../shared/api/rootApi';
 import type { UserType } from '../model/userType';
 import { useSnackbar } from 'notistack';
-import type { AxiosError } from 'axios';
 import { selectIsLoading, setIsLoading, setUser } from '../model/store/userStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { useNavigate } from 'react-router-dom';
+import { z, ZodError } from 'zod';
 
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
   const navigate = useNavigate();
 
+  const emailSchema = z.email({ message: 'Invalid email address!' });
+  const passwordSchema = z.string().min(8, { message: 'Invalid password, min 8 chars' });
+
   const handleSubmit = async () => {
     try {
+      emailSchema.parse(username);
+      passwordSchema.parse(password);
+
       dispatch(setIsLoading(true));
       const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
       const loginData = await rootApi.post<UserType>(url, {
@@ -40,34 +45,39 @@ const Auth = () => {
         password,
       });
 
-      // Persist user in redux
-      dispatch(setUser(loginData.data));
-      // Also persist token (and user) in localStorage so the session can survive reloads
-      try {
-        localStorage.setItem('access_token', loginData.data.access_token);
-        localStorage.setItem('user', JSON.stringify(loginData.data));
-      } catch (e) {
-        // Quieten any localStorage errors (e.g., storage disabled)
-        console.error('Failed to persist user to localStorage', e);
+      if (loginFormName === 'login') {
+        // Persist user in redux
+        dispatch(setUser(loginData.data));
+        try {
+          localStorage.setItem('access_token', loginData.data.access_token);
+          localStorage.setItem('user', JSON.stringify(loginData.data));
+        } catch (e) {
+          console.error('Failed to persist user to localStorage', e);
+        }
+        enqueueSnackbar('Welcome!', { variant: 'success' });
+
+        const params = new URLSearchParams(window.location.search);
+        const back = params.get('back');
+        navigate(back || '/');
+      } else {
+        // Регистрация успешна, но не логиним
+        enqueueSnackbar('Registration successful! Please log in.', {
+          variant: 'success',
+        });
       }
-
-      enqueueSnackbar('Welcome!', { variant: 'success' });
-
-      const params = new URLSearchParams(window.location.search);
-      const back = params.get('back');
-
-      navigate(back || '/');
     } catch (error) {
-      const axiosError = error as AxiosError<{ message: string }>;
-      enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
+      if (error instanceof ZodError) {
+        enqueueSnackbar(`${error.issues[0].message}`, {
+          variant: 'error',
+        });
+        return;
+      }
+      enqueueSnackbar(`${error}`, { variant: 'error' });
     } finally {
       dispatch(setIsLoading(false));
     }
   };
 
-  if (error) {
-    throw new Error('Error');
-  }
   if (isLoading) {
     return (
       <Box
@@ -168,9 +178,6 @@ const Auth = () => {
             }}
           >
             {loginFormName === 'login' ? 'Login' : 'Register'}
-          </Button>
-          <Button variant="contained" color="error" onClick={() => setError(true)}>
-            Throw Error
           </Button>
         </Stack>
       </Paper>
