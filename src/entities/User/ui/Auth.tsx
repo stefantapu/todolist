@@ -20,40 +20,49 @@ import { selectIsLoading, setIsLoading, setUser } from '../model/store/userStore
 import { useAppDispatch, useAppSelector } from '../../../app/store';
 import { useNavigate } from 'react-router-dom';
 import { z, ZodError } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+// Zod Validation
+const emailSchema = z.string().email({ message: 'Invalid email address!' });
+const passwordSchema = z
+  .string()
+  .min(8, { message: 'Invalid password, min 8 chars' })
+  .max(50, { message: 'Password must be less than 50 characters' });
+const loginSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+type Inputs = z.infer<typeof loginSchema>;
 
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>('login');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
   const navigate = useNavigate();
 
-  //Zod Validation
-  const emailSchema = z.email({ message: 'Invalid email address!' });
-  const passwordSchema = z
-    .string()
-    .min(8, { message: 'Invalid password, min 8 chars' })
-    .max(50, { message: 'Password must be less than 50 characters' });
-  const loginSchema = z.object({
-    email: emailSchema,
-    password: passwordSchema,
+  // react-hook-form + zod
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<Inputs>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onTouched',
   });
 
-  const handleSubmit = async () => {
+  const onSubmit = async (data: Inputs) => {
     try {
-      loginSchema.parse({ email: username, password });
-
       dispatch(setIsLoading(true));
       const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
       const loginData = await rootApi.post<UserType>(url, {
-        username,
-        password,
+        username: data.email,
+        password: data.password,
       });
 
       if (loginFormName === 'login') {
-        // Persist user in redux
         dispatch(setUser(loginData.data));
         try {
           localStorage.setItem('access_token', loginData.data.access_token);
@@ -67,10 +76,10 @@ const Auth = () => {
         const back = params.get('back');
         navigate(back || '/');
       } else {
-        // Регистрация успешна, но не логиним
         enqueueSnackbar('Registration successful! Please log in.', {
           variant: 'success',
         });
+        reset();
       }
     } catch (error) {
       if (error instanceof ZodError) {
@@ -121,7 +130,6 @@ const Auth = () => {
             alignItems: 'center',
           }}
         >
-          {/* Переключатель между формой входа и регистрации */}
           <ToggleButtonGroup
             value={loginFormName}
             exclusive
@@ -136,14 +144,15 @@ const Auth = () => {
               Register
             </ToggleButton>
           </ToggleButtonGroup>
-          {/* Поле для ввода email/имени пользователя */}
+          {/* Email */}
           <TextField
             label="E-mail"
             type="email"
             fullWidth
-            value={username}
-            onChange={e => setUsername(e.target.value)}
             disabled={isLoading}
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            {...register('email')}
             slotProps={{
               input: {
                 startAdornment: (
@@ -156,14 +165,15 @@ const Auth = () => {
             variant="outlined"
             size="small"
           />
-          {/* Поле для ввода пароля */}
+          {/* Password */}
           <TextField
             label="Password"
             type="password"
             fullWidth
-            value={password}
-            onChange={e => setPassword(e.target.value)}
             disabled={isLoading}
+            error={!!errors.password}
+            helperText={errors.password?.message}
+            {...register('password')}
             slotProps={{
               input: {
                 startAdornment: (
@@ -176,9 +186,8 @@ const Auth = () => {
             variant="outlined"
             size="small"
           />
-          {/* Кнопка отправки формы */}
           <Button
-            onClick={handleSubmit}
+            onClick={handleSubmit(onSubmit)}
             variant="contained"
             disabled={isLoading}
             fullWidth
