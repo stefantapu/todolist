@@ -1,4 +1,4 @@
-import { useState, useRef, memo } from 'react';
+import { memo } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -9,6 +9,7 @@ import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import { Grid, Paper, Stack, TextField } from '@mui/material';
 import { useSnackbar } from 'notistack';
+import useEditMode from './useEditMode';
 import {
   useCheckTodoMutation,
   useDeleteTodoMutation,
@@ -23,39 +24,41 @@ type TodoProps = {
 
 export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const [editingField, setEditingField] = useState<'title' | 'description' | null>(null);
-  const [editedTitle, setEditedTitle] = useState(todo.title);
-  const [editedDescription, setEditedDescription] = useState(todo.description);
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  // RTK mutations (need to be called before using the hook's onSave)
+  const [editTodoTitleAndDescription] = useEditTodoMutation();
+  const [checkTodo] = useCheckTodoMutation();
+  const [deleteTodoRTK] = useDeleteTodoMutation();
+
+  const {
+    editingField,
+    editedTitle,
+    editedDescription,
+    setEditedTitle,
+    setEditedDescription,
+    startEditing,
+    saveEditing,
+    inputRef,
+  } = useEditMode(todo.title, todo.description, async (title, description) => {
+    const newTodo: EditTodoType = { title, description, _id: todo._id };
+    await editTodoTitleAndDescription(newTodo).unwrap();
+  });
 
   const isFull = variant === 'fullpage';
 
-  const handleEditTodo = async () => {
-    // If nothing changed
-    if (editedTitle === todo.title && editedDescription === todo.description) {
-      setEditingField(null);
-      enqueueSnackbar('No changes', { variant: 'info' });
-      return;
-    }
+  const handleSave = async () => {
     try {
-      const newTodo: EditTodoType = {
-        title: editedTitle,
-        description: editedDescription,
-        _id: todo._id,
-      };
-      await editTodoTitleAndDescription(newTodo);
-      setEditingField(null);
+      const res = await saveEditing();
+      if (res === 'no-changes') {
+        enqueueSnackbar('No changes', { variant: 'info' });
+        return;
+      }
       enqueueSnackbar('Saved!', { variant: 'success' });
     } catch (error) {
       console.error('Failed to edit todo:', error);
       enqueueSnackbar('Failed to save todo', { variant: 'error' });
     }
   };
-
-  //RTK
-  const [editTodoTitleAndDescription] = useEditTodoMutation();
-  const [checkTodo] = useCheckTodoMutation();
-  const [deleteTodoRTK] = useDeleteTodoMutation();
 
   const handleDeleteTodo = async (id: string) => {
     try {
@@ -117,7 +120,7 @@ export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
                 value={editedTitle}
                 variant="standard"
                 onChange={e => setEditedTitle(e.target.value)}
-                onBlur={() => handleEditTodo()}
+                onBlur={() => handleSave()}
                 onFocus={() => {
                   if (inputRef.current) {
                     inputRef.current.setSelectionRange(
@@ -127,7 +130,7 @@ export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
                   }
                 }}
                 onKeyDown={e => {
-                  if (e.key === 'Enter') handleEditTodo();
+                  if (e.key === 'Enter') handleSave();
                 }}
                 slotProps={{
                   root: { sx: { width: '100%' } },
@@ -174,8 +177,7 @@ export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
                     width: '100%',
                   }}
                   onDoubleClick={() => {
-                    setEditedTitle(todo.title);
-                    setEditingField('title');
+                    startEditing('title');
                   }}
                 >
                   {todo.title}
@@ -207,9 +209,9 @@ export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
                 value={editedDescription}
                 variant="standard"
                 onChange={e => setEditedDescription(e.target.value)}
-                onBlur={() => handleEditTodo()}
+                onBlur={() => handleSave()}
                 onKeyDown={e => {
-                  if (e.key === 'Enter' && e.ctrlKey) handleEditTodo();
+                  if (e.key === 'Enter' && e.ctrlKey) handleSave();
                 }}
                 slotProps={{
                   input: {
@@ -248,8 +250,7 @@ export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
                   whiteSpace: 'pre-wrap', // matches multiline textfield behavior
                 }}
                 onDoubleClick={() => {
-                  setEditedDescription(todo.description);
-                  setEditingField('description');
+                  startEditing('description');
                 }}
               >
                 {todo.description}
