@@ -1,8 +1,7 @@
 import {
-  Box,
   Button,
-  CircularProgress,
   Container,
+  IconButton,
   InputAdornment,
   Paper,
   Stack,
@@ -11,7 +10,7 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-import { PasswordRounded } from '@mui/icons-material';
+import { PasswordRounded, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useState } from 'react';
 import { rootApi } from '../../../shared/api/rootApi';
 import type { UserType } from '../model/userType';
@@ -22,17 +21,30 @@ import { useNavigate } from 'react-router-dom';
 import { z, ZodError } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { AxiosError } from 'axios';
 
 // Zod Validation
-const emailSchema = z.string().email({ message: 'Invalid email address!' });
+const emailSchema = z.email({ message: 'Invalid email address!' });
 const passwordSchema = z
   .string()
-  .min(8, { message: 'Invalid password, min 8 chars' })
-  .max(50, { message: 'Password must be less than 50 characters' });
-const loginSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-});
+  .min(8, { message: 'Minimim 8 characters' })
+  .max(50, { message: 'Password must be less than 50 characters' })
+  .regex(/(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~])/, {
+    message: 'At least 1 special symbol',
+  });
+const loginSchema = z
+  .object({
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string().optional(),
+  })
+  .refine(
+    data => data.confirmPassword === undefined || data.password === data.confirmPassword,
+    {
+      message: 'Passwords do not match',
+      path: ['confirmPassword'],
+    }
+  );
 type Inputs = z.infer<typeof loginSchema>;
 
 const Auth = () => {
@@ -41,7 +53,7 @@ const Auth = () => {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
   const navigate = useNavigate();
-
+  const [showPass, setShowPass] = useState(false);
   // react-hook-form + zod
   const {
     register,
@@ -50,11 +62,19 @@ const Auth = () => {
     reset,
   } = useForm<Inputs>({
     resolver: zodResolver(loginSchema),
-    mode: 'onTouched',
+    mode: 'onChange',
   });
 
   const onSubmit = async (data: Inputs) => {
     try {
+      // Проверка совпадения паролей при регистрации
+      if (loginFormName === 'register') {
+        if (data.password !== data.confirmPassword) {
+          enqueueSnackbar('Passwords do not match', { variant: 'error' });
+          return;
+        }
+      }
+
       dispatch(setIsLoading(true));
       const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
       const loginData = await rootApi.post<UserType>(url, {
@@ -90,26 +110,12 @@ const Auth = () => {
         });
         return;
       }
-      enqueueSnackbar(`${error}`, { variant: 'error' });
+      const axiosError = error as AxiosError<{ message: string }>;
+      enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
     } finally {
       dispatch(setIsLoading(false));
     }
   };
-
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <Container
@@ -168,7 +174,7 @@ const Auth = () => {
           {/* Password */}
           <TextField
             label="Password"
-            type="password"
+            type={showPass ? 'text' : 'password'}
             fullWidth
             disabled={isLoading}
             error={!!errors.password}
@@ -181,11 +187,56 @@ const Auth = () => {
                     <PasswordRounded />
                   </InputAdornment>
                 ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPass(v => !v)}
+                      edge="end"
+                      tabIndex={-1}
+                    >
+                      {showPass ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
               },
             }}
             variant="outlined"
             size="small"
           />
+          {loginFormName === 'register' && (
+            <TextField
+              label="Repeat Password"
+              type={showPass ? 'text' : 'password'}
+              fullWidth
+              disabled={isLoading}
+              error={!!errors.confirmPassword}
+              helperText={errors.confirmPassword?.message}
+              {...register('confirmPassword')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PasswordRounded />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPass(v => !v)}
+                        edge="end"
+                        tabIndex={-1}
+                      >
+                        {showPass ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              variant="outlined"
+              size="small"
+            />
+          )}
+
           <Button
             onClick={handleSubmit(onSubmit)}
             variant="contained"
