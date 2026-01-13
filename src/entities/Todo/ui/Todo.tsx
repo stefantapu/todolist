@@ -16,6 +16,8 @@ import {
   useEditTodoMutation,
 } from '../api/todoApi';
 import { formatDistanceToNow } from 'date-fns';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type TodoProps = {
   todo: TodoType;
@@ -23,6 +25,18 @@ type TodoProps = {
 };
 
 export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
+  const { setNodeRef, attributes, listeners, transform, transition, isDragging } =
+    useSortable({ id: todo._id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    background: 'white',
+    border: '1px solid #ccc',
+    borderRadius: 6,
+    cursor: 'grab',
+    opacity: isDragging ? 0.6 : 1,
+  };
+
   const { enqueueSnackbar } = useSnackbar();
 
   // RTK mutations (need to be called before using the hook's onSave)
@@ -95,6 +109,13 @@ export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
 
   return (
     <Box
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => {
+        console.log('click:', todo.title);
+      }}
       sx={{
         flexGrow: 1,
         width: isFull ? '100%' : 'min(50%, 500px)',
@@ -248,6 +269,10 @@ export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
                   fontSize: 16,
                   lineHeight: 1.5,
                   whiteSpace: 'pre-wrap', // matches multiline textfield behavior
+                  height: isFull ? 'auto' : '100%',
+                  overflow: 'hidden',
+                  overflowWrap: 'break-word',
+                  wordBreak: 'break-word',
                 }}
                 onDoubleClick={() => {
                   startEditing('description');

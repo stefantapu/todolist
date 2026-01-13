@@ -7,26 +7,65 @@ import { Todo } from './Todo';
 import { useAddTodoMutation, useGetTodosQuery } from '../api/todoApi';
 import { useSnackbar } from 'notistack';
 import { selectUser } from '../../User/model/store/userStore';
+import {
+  closestCenter,
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 
 const Todos = () => {
   const { enqueueSnackbar } = useSnackbar();
   const user = useAppSelector(selectUser);
   const filters = useAppSelector(selectFilters);
-  const [newTodoTitle, setNewTodoTitle] = useState('');
-  const [newTodoDescription, setNewTodoDescription] = useState('');
-
   const {
     data,
     isFetching: isGettingTodos,
     isLoading: isGettingTodosInitial, // важно: именно initial load
     isError: isGettingError,
     refetch,
-  } = useGetTodosQuery(filters, { skip: !user?.access_token, pollingInterval: 15000 });
+  } = useGetTodosQuery(filters, { skip: !user?.access_token, pollingInterval: 150000 });
 
   const [
     addTodoToBackend,
     { isLoading: isAddingTodo, isError: isAddingError, isSuccess: isAddedSucces },
   ] = useAddTodoMutation();
+  const [newTodoTitle, setNewTodoTitle] = useState('');
+  const [newTodoDescription, setNewTodoDescription] = useState('');
+
+  const [items, setItems] = useState(data ?? []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  useEffect(() => {
+    setItems(data ?? []);
+  }, [data]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setItems(items => {
+      if (!items) return items;
+
+      const oldIndex = items.findIndex(i => i._id === active.id);
+      const newIndex = items.findIndex(i => i._id === over.id);
+
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  };
 
   const isInitialLoading = isGettingTodosInitial && !data;
   const isError = isAddingError || isGettingError;
@@ -119,21 +158,32 @@ const Todos = () => {
         </Stack>
       </Paper>
 
-      <Grid
-        container
-        direction="row"
-        gap={2}
-        sx={{
-          p: 2,
-          justifyContent: 'flex-start',
-          alignItems: 'stretch',
-          height: '100%',
-        }}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
-        {data?.map(todo => (
-          <Todo todo={todo} key={todo._id} />
-        ))}
-      </Grid>
+        <SortableContext
+          items={items?.map(i => i._id) ?? []}
+          strategy={rectSortingStrategy}
+        >
+          <Grid
+            container
+            direction="row"
+            gap={2}
+            sx={{
+              p: 2,
+              justifyContent: 'flex-start',
+              alignItems: 'stretch',
+              height: '100%',
+            }}
+          >
+            {items?.map(todo => (
+              <Todo todo={todo} key={todo._id} />
+            ))}
+          </Grid>
+        </SortableContext>
+      </DndContext>
     </Box>
   );
 };
