@@ -16,6 +16,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
+import { Accept } from '../../App/ui/FileUploader';
 
 const Todos = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -156,6 +157,10 @@ const Todos = () => {
             Add task
           </Button>
         </Stack>
+      </Paper>
+
+      <Paper elevation={24} sx={{ padding: 4, margin: 2, marginTop: 4 }}>
+        <Accept />
       </Paper>
 
       <DndContext
