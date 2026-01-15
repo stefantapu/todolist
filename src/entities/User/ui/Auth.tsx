@@ -12,16 +12,14 @@ import {
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import { PasswordRounded, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useState } from 'react';
-import { rootApi } from '../../../shared/api/rootApi';
-import type { UserType } from '../model/userType';
+import { useLoginMutation, useRegisterMutation } from '../api/userApi';
 import { useSnackbar } from 'notistack';
-import { selectIsLoading, setIsLoading, setUser } from '../model/store/userStore';
-import { useAppDispatch, useAppSelector } from '../../../app/store';
+import { setUser } from '../model/store/userStore';
+import { useAppDispatch } from '../../../app/store';
 import { useNavigate } from 'react-router-dom';
 import { z, ZodError } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { AxiosError } from 'axios';
 
 // Zod Validation
 const emailSchema = z.email({ message: 'Invalid email address!' });
@@ -51,9 +49,14 @@ const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>('login');
   const dispatch = useAppDispatch();
-  const isLoading = useAppSelector(selectIsLoading);
   const navigate = useNavigate();
   const [showPass, setShowPass] = useState(false);
+
+  const [login, { isLoading: isLoginLoading }] = useLoginMutation();
+  const [registerUser, { isLoading: isRegisterLoading }] = useRegisterMutation();
+
+  const isLoading = isLoginLoading || isRegisterLoading;
+
   // react-hook-form + zod
   const {
     register,
@@ -61,7 +64,7 @@ const Auth = () => {
     formState: { errors },
     reset,
   } = useForm<Inputs>({
-    resolver: zodResolver(loginSchema),
+    resolver: loginFormName === 'register' ? zodResolver(loginSchema) : undefined,
     mode: 'onChange',
   });
 
@@ -75,18 +78,16 @@ const Auth = () => {
         }
       }
 
-      dispatch(setIsLoading(true));
-      const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
-      const loginData = await rootApi.post<UserType>(url, {
-        username: data.email,
-        password: data.password,
-      });
-
       if (loginFormName === 'login') {
-        dispatch(setUser(loginData.data));
+        const loginData = await login({
+          username: data.email,
+          password: data.password,
+        }).unwrap();
+
+        dispatch(setUser(loginData));
         try {
-          localStorage.setItem('access_token', loginData.data.access_token);
-          localStorage.setItem('user', JSON.stringify(loginData.data));
+          localStorage.setItem('access_token', loginData.access_token);
+          localStorage.setItem('user', JSON.stringify(loginData));
         } catch (e) {
           console.error('Failed to persist user to localStorage', e);
         }
@@ -96,12 +97,17 @@ const Auth = () => {
         const back = params.get('back');
         navigate(back || '/');
       } else {
+        await registerUser({
+          username: data.email,
+          password: data.password,
+        }).unwrap();
+
         enqueueSnackbar('Registration successful! Please log in.', {
           variant: 'success',
         });
         reset();
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ZodError) {
         error.issues.forEach(issue => {
           enqueueSnackbar(`${issue.message}`, {
@@ -110,10 +116,8 @@ const Auth = () => {
         });
         return;
       }
-      const axiosError = error as AxiosError<{ message: string }>;
-      enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
-    } finally {
-      dispatch(setIsLoading(false));
+      const errorMessage = error?.data?.message || error?.message || 'An unexpected error occurred';
+      enqueueSnackbar(errorMessage, { variant: 'error' });
     }
   };
 

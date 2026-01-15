@@ -11,10 +11,14 @@ import {
   closestCenter,
   DndContext,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
 } from '@dnd-kit/core';
+import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import { Accept } from '../../App/ui/FileUploader';
 
@@ -38,11 +42,18 @@ const Todos = () => {
   const [newTodoDescription, setNewTodoDescription] = useState('');
 
   const [items, setItems] = useState(data ?? []);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
       },
     })
   );
@@ -51,8 +62,13 @@ const Todos = () => {
     setItems(data ?? []);
   }, [data]);
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveId(null);
 
     if (!over || active.id === over.id) {
       return;
@@ -103,7 +119,7 @@ const Todos = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, width: '100%', overflowX: 'hidden' }}>
       <Paper elevation={24} sx={{ padding: 4, margin: 2, marginTop: 4 }}>
         <Stack direction="row" spacing={2} alignItems="center">
           <Button variant="contained" onClick={refetch} disabled={isGettingTodos}>
@@ -166,7 +182,9 @@ const Todos = () => {
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        modifiers={[restrictToWindowEdges]}
       >
         <SortableContext
           items={items?.map(i => i._id) ?? []}
@@ -180,7 +198,9 @@ const Todos = () => {
               p: 2,
               justifyContent: 'flex-start',
               alignItems: 'stretch',
-              height: '100%',
+              maxWidth: '100%',
+              overflowX: 'hidden',
+              alignContent: 'flex-start',
             }}
           >
             {items?.map(todo => (
@@ -188,6 +208,15 @@ const Todos = () => {
             ))}
           </Grid>
         </SortableContext>
+        <DragOverlay adjustScale={true}>
+          {activeId ? (
+            <Todo
+              todo={items.find(i => i._id === activeId)!}
+              variant="card"
+              isOverlay
+            />
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </Box>
   );

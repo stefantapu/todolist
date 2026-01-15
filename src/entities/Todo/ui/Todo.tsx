@@ -22,19 +22,26 @@ import { CSS } from '@dnd-kit/utilities';
 type TodoProps = {
   todo: TodoType;
   variant?: 'card' | 'fullpage';
+  isOverlay?: boolean;
 };
 
-export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
+export const Todo = memo(({ todo, variant = 'card', isOverlay }: TodoProps) => {
   const { setNodeRef, attributes, listeners, transform, transition, isDragging } =
     useSortable({ id: todo._id });
+
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: isOverlay ? undefined : CSS.Translate.toString(transform),
     transition,
     background: 'white',
-    border: '1px solid #ccc',
+    border: isOverlay ? '2px solid #1976d2' : '1px solid #ccc',
     borderRadius: 6,
-    cursor: 'grab',
-    opacity: isDragging ? 0.6 : 1,
+    cursor: isOverlay ? 'grabbing' : 'grab',
+    opacity: isDragging && !isOverlay ? 0.4 : 1,
+    zIndex: isOverlay ? 1000 : undefined,
+    boxShadow: isOverlay
+      ? '0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)'
+      : undefined,
+    touchAction: 'none',
   };
 
   const { enqueueSnackbar } = useSnackbar();
@@ -111,8 +118,8 @@ export const Todo = memo(({ todo, variant = 'card' }: TodoProps) => {
     <Box
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
+      {...(isOverlay ? {} : attributes)}
+      {...(isOverlay ? {} : listeners)}
       onClick={() => {
         console.log('click:', todo.title);
       }}

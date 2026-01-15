@@ -44,8 +44,9 @@ export const Accept = () => {
     accept: {
       'image/*': ['.jpeg', '.png'], // принимаем только изображения
     },
-    maxFiles: 1, // максимум один файл
+    maxFiles: 3, // максимум один файл
     maxSize: 5 * 1024 * 1024, // максимум 5 МБ
+
     onDrop: acceptedFiles => {
       // Преобразуем файлы в UploadFile объекты
       const mapped = acceptedFiles.map(file => {
