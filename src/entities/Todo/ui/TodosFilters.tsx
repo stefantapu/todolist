@@ -217,7 +217,7 @@ const TodosFilters = () => {
             backgroundColor: alpha(theme.palette.background.default, 0.5),
           }}
         >
-          <MenuItem value={5}>5 tasks</MenuItem>
+          <MenuItem value={6}>6 tasks</MenuItem>
           <MenuItem value={10}>10 tasks</MenuItem>
           <MenuItem value={20}>20 tasks</MenuItem>
         </Select>

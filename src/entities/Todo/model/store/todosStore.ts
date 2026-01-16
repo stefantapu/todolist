@@ -18,7 +18,7 @@ const initialState: TodosStore = {
   filters: {
     completed: 'all',
     page: 1,
-    limit: 5,
+    limit: 6,
   },
 };
 

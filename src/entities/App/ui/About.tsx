@@ -31,7 +31,7 @@ interface Feature {
 }
 
 export const About = ({ 
-  title = 'TaskMaster Pro', 
+  title = 'TaskMaster', 
   version = '1.0.0' 
 }: { 
   title?: string; 
