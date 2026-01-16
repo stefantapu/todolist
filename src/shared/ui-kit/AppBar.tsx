@@ -1,4 +1,4 @@
-import { Brightness7, Login as LoginIcon, Logout as LogoutIcon, HistoryEdu as LogoIcon } from '@mui/icons-material';
+import { Brightness7, Login as LoginIcon, Logout as LogoutIcon } from '@mui/icons-material';
 import Brightness4 from '@mui/icons-material/Brightness4';
 import {
   AppBar as MuiAppBar,

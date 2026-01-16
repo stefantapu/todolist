@@ -13,8 +13,6 @@ import {
   Typography,
   useTheme,
   alpha,
-  IconButton,
-  Tooltip,
 } from '@mui/material';
 import {
   Badge as BadgeIcon,
@@ -23,7 +21,6 @@ import {
   Security as SecurityIcon,
   Logout as LogoutIcon,
   ArrowBack as ArrowBackIcon,
-  VpnKey as KeyIcon,
   AccountCircle as AccountIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';

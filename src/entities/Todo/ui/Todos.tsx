@@ -8,21 +8,14 @@ import {
   Typography,
   useTheme,
   alpha,
-  InputAdornment,
-  Tabs,
-  Tab,
   Card,
   Container,
-  Pagination,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import {
   selectFilters,
-  setCompletedFilter,
-  setPage,
-  setSearch,
 } from '../model/store/todosStore';
-import { useAppDispatch, useAppSelector } from '../../../app/store';
+import { useAppSelector } from '../../../app/store';
 import { Todo } from './Todo';
 import { useAddTodoMutation, useGetTodosQuery } from '../api/todoApi';
 import { useSnackbar } from 'notistack';
@@ -40,15 +33,12 @@ import {
 } from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
-import SearchIcon from '@mui/icons-material/Search';
 import AddTaskIcon from '@mui/icons-material/AddTask';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import TodosFilters from './TodosFilters';
 
 const Todos = () => {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
   const filters = useAppSelector(selectFilters);
   const {
@@ -127,18 +117,6 @@ const Todos = () => {
       enqueueSnackbar('Error fetching todos', { variant: 'error' });
     }
   }, [enqueueSnackbar, isError]);
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setSearch(event.target.value));
-  };
-
-  const handleStatusChange = (_event: React.SyntheticEvent, newValue: 'all' | 'true' | 'false') => {
-    dispatch(setCompletedFilter(newValue));
-  };
-
-  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
-    dispatch(setPage(value));
-  };
 
   if (isInitialLoading) {
     return (
