@@ -7,7 +7,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import type { CheckTodoType, EditTodoType, TodoType } from '../model/todoType';
 import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
-import { Grid, Paper, Stack, TextField } from '@mui/material';
+import { Paper, Stack, TextField, useTheme, alpha, Button, Divider, Chip } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import useEditMode from './useEditMode';
 import {
@@ -18,6 +18,9 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Accept } from '../../App/ui/FileUploader';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
 
 type TodoProps = {
   todo: TodoType;
@@ -26,21 +29,17 @@ type TodoProps = {
 };
 
 export const Todo = memo(({ todo, variant = 'card', isOverlay }: TodoProps) => {
+  const theme = useTheme();
   const { setNodeRef, attributes, listeners, transform, transition, isDragging } =
     useSortable({ id: todo._id });
+
+  const isFull = variant === 'fullpage';
 
   const style: React.CSSProperties = {
     transform: isOverlay ? undefined : CSS.Translate.toString(transform),
     transition,
-    background: 'white',
-    border: isOverlay ? '2px solid #1976d2' : '1px solid #ccc',
-    borderRadius: 6,
-    cursor: isOverlay ? 'grabbing' : 'grab',
     opacity: isDragging && !isOverlay ? 0.4 : 1,
     zIndex: isOverlay ? 1000 : undefined,
-    boxShadow: isOverlay
-      ? '0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)'
-      : undefined,
     touchAction: 'none',
   };
 
@@ -65,7 +64,6 @@ export const Todo = memo(({ todo, variant = 'card', isOverlay }: TodoProps) => {
     await editTodoTitleAndDescription(newTodo).unwrap();
   });
 
-  const isFull = variant === 'fullpage';
 
   const handleSave = async () => {
     try {
@@ -120,205 +118,193 @@ export const Todo = memo(({ todo, variant = 'card', isOverlay }: TodoProps) => {
       style={style}
       {...(isOverlay ? {} : attributes)}
       {...(isOverlay ? {} : listeners)}
-      onClick={() => {
-        console.log('click:', todo.title);
+      onClick={(e) => {
+          // Prevent click propagation if clicking on interactive elements
+          if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input') || (e.target as HTMLElement).closest('a')) {
+              return;
+          }
       }}
       sx={{
-        flexGrow: 1,
-        width: isFull ? '100%' : 'min(50%, 500px)',
+        width: '100%',
         height: isFull ? 'auto' : '100%',
+        position: 'relative',
       }}
     >
-      <Paper elevation={16} sx={{ padding: isFull ? 4 : 2, height: '100%' }}>
-        <Stack spacing={isFull ? 8 : 4} sx={{ height: '100%' }}>
+      <Paper
+        elevation={isOverlay ? 16 : 0}
+        sx={{ 
+            p: isFull ? 4 : 3, 
+            height: '100%',
+            backgroundColor: theme.palette.background.paper,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: todo.completed 
+                ? alpha(theme.palette.success.main, 0.3) 
+                : alpha(theme.palette.divider, 0.6),
+            transition: 'all 0.2s ease-in-out',
+            boxShadow: isOverlay 
+                ? theme.shadows[16] 
+                : isFull 
+                    ? theme.shadows[0] 
+                    : '0 2px 12px ' + alpha(theme.palette.common.black, 0.04),
+            '&:hover': {
+                borderColor: theme.palette.primary.main,
+                transform: !isFull && !isOverlay ? 'translateY(-4px)' : undefined,
+                boxShadow: !isFull && !isOverlay ? theme.shadows[8] : undefined,
+            },
+            ...(todo.completed && {
+                backgroundColor: alpha(theme.palette.success.main, 0.02),
+            })
+        }}
+      >
+        <Stack spacing={2} sx={{ height: '100%' }}>
           <Stack
             direction="row"
-            sx={{
-              flexWrap: 'wrap',
-              alignContent: 'space-between',
-              justifyContent: 'space-between',
-              width: '100%',
-            }}
+            justifyContent="space-between"
+            alignItems="flex-start"
+            spacing={2}
           >
-            {editingField === 'title' ? (
-              <TextField
-                fullWidth
-                autoFocus
-                inputRef={inputRef}
-                value={editedTitle}
-                variant="standard"
-                onChange={e => setEditedTitle(e.target.value)}
-                onBlur={() => handleSave()}
-                onFocus={() => {
-                  if (inputRef.current) {
-                    inputRef.current.setSelectionRange(
-                      editedTitle.length,
-                      editedTitle.length
-                    );
-                  }
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') handleSave();
-                }}
-                slotProps={{
-                  root: { sx: { width: '100%' } },
-                  input: {
-                    disableUnderline: false,
-                    sx: {
-                      padding: 0,
-                      margin: 0,
-                      textAlign: 'start',
-                      width: '100%',
-                    },
-                  },
-                  htmlInput: {
-                    sx: {
-                      fontWeight: 500,
-                      fontSize: isFull ? 36 : 26,
-                      padding: 0,
-                      margin: 0,
-                      lineHeight: 1.2,
-                      height: 'auto',
-                    },
-                  },
-                }}
-                sx={{ width: '100%' }}
-              />
-            ) : (
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{
-                  flexWrap: 'nowrap',
-                  alignContent: 'space-between',
-                  justifyContent: 'space-between',
-                  width: '100%',
-                }}
-              >
-                <Typography
-                  noWrap
-                  variant="h6"
-                  sx={{
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    fontSize: isFull ? 36 : 26,
-                    width: '100%',
-                  }}
-                  onDoubleClick={() => {
-                    startEditing('title');
-                  }}
-                >
-                  {todo.title}
-                </Typography>
-                <div>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Checkbox checked={todo.completed} onClick={handleToggleCompleted} />
-                    {isFull ? (
-                      <div></div>
-                    ) : (
-                      <NavLink to={`/todo/${todo._id}`}>
-                        <IconButton aria-label="open todo" size="small">
-                          <OpenInNewIcon fontSize="small" />
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%' }}>
+                 <Checkbox 
+                    checked={todo.completed} 
+                    onClick={handleToggleCompleted} 
+                    color="success"
+                    sx={{
+                        '&.Mui-checked': {
+                            color: theme.palette.success.main,
+                        },
+                    }}
+                />
+                
+                {editingField === 'title' ? (
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    inputRef={inputRef}
+                    value={editedTitle}
+                    variant="standard"
+                    onChange={e => setEditedTitle(e.target.value)}
+                    onBlur={() => handleSave()}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleSave();
+                    }}
+                    slotProps={{
+                        input: {
+                            disableUnderline: false,
+                            sx: { fontSize: isFull ? '2rem' : '1.25rem', fontWeight: 600 }
+                        }
+                    }}
+                  />
+                ) : (
+                    <Typography
+                        variant={isFull ? 'h4' : 'h6'}
+                        sx={{
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            textDecoration: todo.completed ? 'line-through' : 'none',
+                            color: todo.completed ? 'text.disabled' : 'text.primary',
+                            width: '100%',
+                            wordBreak: 'break-word',
+                        }}
+                        onDoubleClick={() => startEditing('title')}
+                    >
+                        {todo.title}
+                    </Typography>
+                )}
+            </Box>
+
+            <Box sx={{ display: 'flex', whiteSpace: 'nowrap' }}>
+                {!isFull && (
+                    <NavLink to={`/todo/${todo._id}`}>
+                        <IconButton size="small" color="primary">
+                            <OpenInNewIcon fontSize="small" />
                         </IconButton>
-                      </NavLink>
-                    )}
-                  </Box>
-                </div>
-              </Stack>
-            )}
+                    </NavLink>
+                )}
+            </Box>
           </Stack>
 
-          <Stack sx={{ display: 'inline-block' }}>
+          <Divider sx={{ opacity: 0.5 }} />
+
+          <Box sx={{ flexGrow: 1 }}>
             {editingField === 'description' ? (
               <TextField
                 multiline
-                autoFocus
                 fullWidth
+                autoFocus
+                minRows={3}
                 value={editedDescription}
-                variant="standard"
+                variant="outlined"
                 onChange={e => setEditedDescription(e.target.value)}
                 onBlur={() => handleSave()}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && e.ctrlKey) handleSave();
                 }}
-                slotProps={{
-                  input: {
-                    sx: {
-                      display: 'block',
-                      width: '100%',
-                      fontWeight: 300,
-                      fontSize: 16,
-                      lineHeight: 1.5,
-                      padding: 0,
-                      margin: 0,
-                      resize: 'none',
-                    },
-                  },
-                  root: {
-                    sx: {
-                      display: 'block',
-                      width: '100%',
-                    },
-                  },
-                }}
-                sx={{
-                  '& .MuiInput-underline:before, & .MuiInput-underline:after': {
-                    display: 'none',
-                  },
+                sx={{ 
+                    mt: 1,
+                    '& .MuiOutlinedInput-root': {
+                        fontSize: '0.95rem',
+                        lineHeight: 1.6
+                    }
                 }}
               />
             ) : (
               <Typography
                 variant="body1"
+                color="text.secondary"
                 sx={{
                   cursor: 'pointer',
-                  fontWeight: 300,
-                  fontSize: 16,
-                  lineHeight: 1.5,
-                  whiteSpace: 'pre-wrap', // matches multiline textfield behavior
-                  height: isFull ? 'auto' : '100%',
-                  overflow: 'hidden',
-                  overflowWrap: 'break-word',
-                  wordBreak: 'break-word',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.6,
+                  whiteSpace: 'pre-wrap',
+                  minHeight: isFull ? 100 : 'auto',
                 }}
-                onDoubleClick={() => {
-                  startEditing('description');
-                }}
+                 onDoubleClick={() => startEditing('description')}
               >
-                {todo.description}
+                {todo.description || <Box component="span" sx={{ fontStyle: 'italic', opacity: 0.6 }}>No description provided</Box>}
               </Typography>
             )}
-          </Stack>
+          </Box>
 
-          <Grid
-            container
-            direction="row"
-            sx={{
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{
-                display: 'block',
-                color: 'text.secondary',
-                fontSize: isFull ? 18 : 14,
-              }}
-            >
-              {`Updated: ${formatDistanceToNow(todo.updatedAt)} ago`}
-            </Typography>
-            <IconButton
-              aria-label="delete"
-              onClick={() => {
-                handleDeleteTodo(todo._id);
-              }}
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Grid>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" pt={1}>
+             <Chip 
+                label={`Updated ${formatDistanceToNow(todo.updatedAt)} ago`} 
+                size="small" 
+                variant="outlined" 
+                sx={{ fontSize: '0.75rem', opacity: 0.8 }}
+             />
+             
+            <Stack direction="row" spacing={1}>
+                 {isFull && (
+                     <Button 
+                        startIcon={editingField ? <SaveIcon /> : <EditIcon />}
+                        size="small"
+                        onClick={() => editingField ? handleSave() : startEditing('description')}
+                     >
+                         {editingField ? 'Save' : 'Edit'}
+                     </Button>
+                 )}
+                <IconButton
+                  aria-label="delete"
+                  color="error"
+                  size="small"
+                  onClick={() => handleDeleteTodo(todo._id)}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+            </Stack>
+          </Stack>
         </Stack>
       </Paper>
+      
+      {isFull && (
+        <Box sx={{ mt: 4 }}>
+             <Typography variant="h6" fontWeight={700} gutterBottom>
+                Attachments
+             </Typography>
+             <Accept />
+        </Box>
+      )}
     </Box>
   );
 });
