@@ -107,16 +107,19 @@ const Auth = () => {
         });
         reset();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
-        error.issues.forEach(issue => {
-          enqueueSnackbar(`${issue.message}`, {
+        error.issues.forEach((issue) => {
+          enqueueSnackbar(issue.message, {
             variant: 'error',
           });
         });
         return;
       }
-      const errorMessage = error?.data?.message || error?.message || 'An unexpected error occurred';
+      const errorMessage =
+        (error as { data?: { message?: string } })?.data?.message ||
+        (error as Error)?.message ||
+        'An unexpected error occurred';
       enqueueSnackbar(errorMessage, { variant: 'error' });
     }
   };
