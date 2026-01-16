@@ -1,8 +1,7 @@
 import {
-  Box,
   Button,
-  CircularProgress,
   Container,
+  IconButton,
   InputAdornment,
   Paper,
   Stack,
@@ -11,77 +10,119 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-import { PasswordRounded } from '@mui/icons-material';
+import { PasswordRounded, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useState } from 'react';
-import { rootApi } from '../../../shared/api/rootApi';
-import type { UserType } from '../model/userType';
+import { useLoginMutation, useRegisterMutation } from '../api/userApi';
 import { useSnackbar } from 'notistack';
-import type { AxiosError } from 'axios';
-import { selectIsLoading, setIsLoading, setUser } from '../model/store/userStore';
-import { useAppDispatch, useAppSelector } from '../../../app/store';
+import { setUser } from '../model/store/userStore';
+import { useAppDispatch } from '../../../app/store';
 import { useNavigate } from 'react-router-dom';
+import { z, ZodError } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+// Zod Validation
+const emailSchema = z.email({ message: 'Invalid email address!' });
+const passwordSchema = z
+  .string()
+  .min(8, { message: 'Minimim 8 characters' })
+  .max(50, { message: 'Password must be less than 50 characters' })
+  .regex(/(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~])/, {
+    message: 'At least 1 special symbol',
+  });
+const loginSchema = z
+  .object({
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string().optional(),
+  })
+  .refine(
+    data => data.confirmPassword === undefined || data.password === data.confirmPassword,
+    {
+      message: 'Passwords do not match',
+      path: ['confirmPassword'],
+    }
+  );
+type Inputs = z.infer<typeof loginSchema>;
 
 const Auth = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [loginFormName, setLoginFormName] = useState<'login' | 'register'>('login');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
   const dispatch = useAppDispatch();
-  const isLoading = useAppSelector(selectIsLoading);
   const navigate = useNavigate();
+  const [showPass, setShowPass] = useState(false);
 
-  const handleSubmit = async () => {
+  const [login, { isLoading: isLoginLoading }] = useLoginMutation();
+  const [registerUser, { isLoading: isRegisterLoading }] = useRegisterMutation();
+
+  const isLoading = isLoginLoading || isRegisterLoading;
+
+  // react-hook-form + zod
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<Inputs>({
+    resolver: loginFormName === 'register' ? zodResolver(loginSchema) : undefined,
+    mode: 'onChange',
+  });
+
+  const onSubmit = async (data: Inputs) => {
     try {
-      dispatch(setIsLoading(true));
-      const url = loginFormName === 'login' ? 'auth/login' : 'auth/register';
-      const loginData = await rootApi.post<UserType>(url, {
-        username,
-        password,
-      });
-
-      // Persist user in redux
-      dispatch(setUser(loginData.data));
-      // Also persist token (and user) in localStorage so the session can survive reloads
-      try {
-        localStorage.setItem('access_token', loginData.data.access_token);
-        localStorage.setItem('user', JSON.stringify(loginData.data));
-      } catch (e) {
-        // Quieten any localStorage errors (e.g., storage disabled)
-        console.error('Failed to persist user to localStorage', e);
+      // Проверка совпадения паролей при регистрации
+      if (loginFormName === 'register') {
+        if (data.password !== data.confirmPassword) {
+          enqueueSnackbar('Passwords do not match', { variant: 'error' });
+          return;
+        }
       }
 
-      enqueueSnackbar('Welcome!', { variant: 'success' });
+      if (loginFormName === 'login') {
+        const loginData = await login({
+          username: data.email,
+          password: data.password,
+        }).unwrap();
 
-      const params = new URLSearchParams(window.location.search);
-      const back = params.get('back');
-      console.log(back);
-      navigate(back || '/');
-    } catch (error) {
-      const axiosError = error as AxiosError<{ message: string }>;
-      enqueueSnackbar(axiosError.response?.data.message, { variant: 'error' });
-    } finally {
-      dispatch(setIsLoading(false));
+        dispatch(setUser(loginData));
+        try {
+          localStorage.setItem('access_token', loginData.access_token);
+          localStorage.setItem('user', JSON.stringify(loginData));
+        } catch (e) {
+          console.error('Failed to persist user to localStorage', e);
+        }
+        enqueueSnackbar('Welcome!', { variant: 'success' });
+
+        const params = new URLSearchParams(window.location.search);
+        const back = params.get('back');
+        navigate(back || '/');
+      } else {
+        await registerUser({
+          username: data.email,
+          password: data.password,
+        }).unwrap();
+
+        enqueueSnackbar('Registration successful! Please log in.', {
+          variant: 'success',
+        });
+        reset();
+      }
+    } catch (error: unknown) {
+      if (error instanceof ZodError) {
+        error.issues.forEach((issue) => {
+          enqueueSnackbar(issue.message, {
+            variant: 'error',
+          });
+        });
+        return;
+      }
+      const errorMessage =
+        (error as { data?: { message?: string } })?.data?.message ||
+        (error as Error)?.message ||
+        'An unexpected error occurred';
+      enqueueSnackbar(errorMessage, { variant: 'error' });
     }
   };
-
-  if (error) {
-    throw new Error('Error');
-  }
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <Container
@@ -102,7 +143,6 @@ const Auth = () => {
             alignItems: 'center',
           }}
         >
-          {/* Переключатель между формой входа и регистрации */}
           <ToggleButtonGroup
             value={loginFormName}
             exclusive
@@ -117,14 +157,15 @@ const Auth = () => {
               Register
             </ToggleButton>
           </ToggleButtonGroup>
-          {/* Поле для ввода email/имени пользователя */}
+          {/* Email */}
           <TextField
             label="E-mail"
             type="email"
             fullWidth
-            value={username}
-            onChange={e => setUsername(e.target.value)}
             disabled={isLoading}
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            {...register('email')}
             slotProps={{
               input: {
                 startAdornment: (
@@ -137,14 +178,15 @@ const Auth = () => {
             variant="outlined"
             size="small"
           />
-          {/* Поле для ввода пароля */}
+          {/* Password */}
           <TextField
             label="Password"
-            type="password"
+            type={showPass ? 'text' : 'password'}
             fullWidth
-            value={password}
-            onChange={e => setPassword(e.target.value)}
             disabled={isLoading}
+            error={!!errors.password}
+            helperText={errors.password?.message}
+            {...register('password')}
             slotProps={{
               input: {
                 startAdornment: (
@@ -152,14 +194,58 @@ const Auth = () => {
                     <PasswordRounded />
                   </InputAdornment>
                 ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPass(v => !v)}
+                      edge="end"
+                      tabIndex={-1}
+                    >
+                      {showPass ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
               },
             }}
             variant="outlined"
             size="small"
           />
-          {/* Кнопка отправки формы */}
+          {loginFormName === 'register' && (
+            <TextField
+              label="Repeat Password"
+              type={showPass ? 'text' : 'password'}
+              fullWidth
+              disabled={isLoading}
+              error={!!errors.confirmPassword}
+              helperText={errors.confirmPassword?.message}
+              {...register('confirmPassword')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PasswordRounded />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPass(v => !v)}
+                        edge="end"
+                        tabIndex={-1}
+                      >
+                        {showPass ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              variant="outlined"
+              size="small"
+            />
+          )}
+
           <Button
-            onClick={handleSubmit}
+            onClick={handleSubmit(onSubmit)}
             variant="contained"
             disabled={isLoading}
             fullWidth
@@ -168,9 +254,6 @@ const Auth = () => {
             }}
           >
             {loginFormName === 'login' ? 'Login' : 'Register'}
-          </Button>
-          <Button variant="contained" color="error" onClick={() => setError(true)}>
-            Throw Error
           </Button>
         </Stack>
       </Paper>

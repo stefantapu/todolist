@@ -1,11 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Box, Button, CircularProgress, Typography } from '@mui/material';
+import { Container, Box, Button, CircularProgress, Typography, useTheme } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Todo } from './Todo';
 import { useGetTodoByIdQuery } from '../api/todoApi';
 
 export const SingleTodoPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const goBack = () => navigate(-1);
 
@@ -72,14 +74,19 @@ export const SingleTodoPage = () => {
   }
 
   return (
-    <Container sx={{ py: 4 }}>
-      <Box sx={{ mb: 2 }}>
-        <Button onClick={goBack} variant="contained" fullWidth>
-          Back
+    <Box sx={{ minHeight: '100vh', py: 4, backgroundColor: theme.palette.mode === 'dark' ? 'transparent' : '#f8f9fa' }}>
+      <Container maxWidth="md">
+        <Button 
+          onClick={goBack} 
+          variant="text" 
+          startIcon={<ArrowBackIcon />}
+          sx={{ mb: 2, color: 'text.secondary' }}
+        >
+          Back to list
         </Button>
-      </Box>
-      <Todo todo={todo} variant="fullpage" />
-    </Container>
+        <Todo todo={todo} variant="fullpage" />
+      </Container>
+    </Box>
   );
 };
 
